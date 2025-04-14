@@ -1,0 +1,10 @@
+[
+    {
+        "question": "全集团的收入有多少？",
+        "sql": "SELECT SUM(CAST(chargePaid AS DECIMAL(10, 2))) AS total_income\nFROM ns_dws.dws_target_finance;"
+    },
+    {
+        "question": "集团前十的管家收入排名情况",
+        "sql": "SELECT stewardName, SUM(CAST(chargePaid AS DECIMAL(10, 2))) AS total_income\nFROM ns_dws.dws_target_finance\nGROUP BY stewardName\nORDER BY total_income DESC\nLIMIT 10;"
+    }
+]
