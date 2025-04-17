@@ -26,8 +26,19 @@ chatbi 是一个以 FastAPI 为核心、前后端解耦、支持自然语言数�
 ## 快速开始
 
 - 后端入口：`backend/app.py`
-- 前端入口：`frontend/`（可自定义扩展，当前为空）
-- 项目启动脚本：`main/run.py`
+```bash
+uv run -m backend.app
+```
+- 前端入口：`frontend/package.json`
+```bash
+cd frontend
+pnpm install
+pnpm run dev
+```
+- 项目基础训练脚本：`main/run.py`
+```bash
+uv run -m main.run
+```
 - 操作文档与详细说明：请查阅 `main/docs/` 目录
 
 ## 主要特性

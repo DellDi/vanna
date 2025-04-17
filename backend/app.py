@@ -3,14 +3,16 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 # 导入路由模块
-# 确保导入路径正确
+from backend.routes import router as api_router
+
+from dotenv import load_dotenv
 import sys
 import os
+
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.routes import router as api_router
 # 加载环境变量
 load_dotenv()
 

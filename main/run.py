@@ -1,8 +1,9 @@
-from vanna.qianwen import QianWenAI_Chat
-from vanna.chromadb import ChromaDB_VectorStore
 import logging
 import os
 import json
+from vanna.qianwen import QianWenAI_Chat
+from vanna.chromadb import ChromaDB_VectorStore
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -14,6 +15,7 @@ qianwen_config["base_url"] = os.getenv("QWEN_BASE_URL")
 qianwen_config["api_key"] = os.getenv("QWEN_KEY")
 qianwen_config["language"] = "zh"
 qianwen_config["temperature"] = 0.2
+
 logger.info("qianwen_config配置初始化参数: %s", qianwen_config)
 
 class MyVanna(ChromaDB_VectorStore, QianWenAI_Chat):
@@ -103,16 +105,11 @@ def train_qa_data():
         logger.error(f"训练QA数据失败: {str(e)}")
         return False
 
-# 执行初始化训练
-initialize_training()
-# 执行QA训练
-train_qa_data()
-
 # 导出vn实例供FastAPI使用
 __all__ = ['vn', 'create_vanna_instance']
 
-# 如果直接运行此文件，则启动FastAPI服务
-if __name__ == '__main__':
-    from backend.app import app
-    import uvicorn
-    uvicorn.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)), reload=True)
+# 只有在作为主模块运行时才执行训练初始化
+if __name__ == "__main__":
+    print("直接运行run.py，执行训练初始化流程")
+    initialize_training()
+    train_qa_data()
