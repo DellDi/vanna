@@ -132,7 +132,7 @@ GROUP BY
       {/* Main content */}
       <div className="flex-1 flex flex-col">
         <div className="text-center py-12 px-4">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 text-transparent bg-clip-text">
+          <h1 className="text-4xl font-bold bg-linear-to-r from-primary to-primary/60 text-transparent bg-clip-text">
             Welcome to DellDi
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">Your AI-powered copilot for SQL queries.</p>
