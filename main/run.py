@@ -22,62 +22,97 @@ class MyVanna(ChromaDB_VectorStore, QianWenAI_Chat):
         QianWenAI_Chat.__init__(self, config=config)
 
 
-vn = MyVanna(
-    config=qianwen_config
-)
+# 创建Vanna实例
+def create_vanna_instance():
+    vn = MyVanna(config=qianwen_config)
+    
+    # 连接到MySQL数据库, 获取环境变量
+    MYSQL_HOST = os.getenv("MYSQL_HOST")
+    MYSQL_USER = os.getenv("MYSQL_USER")
+    MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+    MYSQL_PORT = os.getenv("MYSQL_PORT")
+    MYSQL_DB = os.getenv("MYSQL_DB")
+    
+    vn.connect_to_mysql(
+        host=MYSQL_HOST,
+        dbname=MYSQL_DB,
+        user=MYSQL_USER,
+        password=MYSQL_PASSWORD,
+        port=int(MYSQL_PORT),
+    )
+    
+    return vn
 
-# 连接到MySQL数据库, 获取环境变量
-MYSQL_HOST = os.getenv("MYSQL_HOST")
-MYSQL_USER = os.getenv("MYSQL_USER")
-MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
-MYSQL_PORT = os.getenv("MYSQL_PORT")
-MYSQL_DB = os.getenv("MYSQL_DB")
+# 全局Vanna实例
+vn = create_vanna_instance()
 
-vn.connect_to_mysql(
-    host=MYSQL_HOST,
-    dbname=MYSQL_DB,
-    user=MYSQL_USER,
-    password=MYSQL_PASSWORD,
-    port=MYSQL_PORT,
-)
-
-# 信息模式查询可能需要根据您的数据库进行一些调整。这是一个很好的起点。限定为ns_dws库
-df_information_schema = vn.run_sql(
-    "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'ns_dws'"
-)
-
-# 这将把信息模式分解成 LLM 可以引用的更小的块
-plan = vn.get_training_plan_generic(df_information_schema)
-
-# 使用信息模式训练
-vn.train(plan=plan)
-
-# 业务术语或定义的文档训练
-vn.train(
-    documentation="""
-    -收缴率定义为：物业费实收/物业费应收 * 100%
-    -2024年收缴率：2024年物业费实收/2024年物业费应收 * 100%
-    -集团：中国金茂
-    -狗：金茂狗
-"""
-)
-
-# QA的方式训练
-# 从train-sql-qa.json文件中读取SQL QA数据
-with open("training_data/newsee/train-sql-qa.json", "r") as f:
-    sql_qa_data = json.load(f)
-
-# 训练SQL QA数据
-for item in sql_qa_data:
+# 初始化训练
+def initialize_training():
+    # 信息模式查询可能需要根据您的数据库进行一些调整。这是一个很好的起点。限定为ns_dws库
+    df_information_schema = vn.run_sql(
+        "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'ns_dws'"
+    )
+    
+    # 这将把信息模式分解成 LLM 可以引用的更小的块
+    plan = vn.get_training_plan_generic(df_information_schema)
+    
+    # 使用信息模式训练
+    vn.train(plan=plan)
+    
+    # 业务术语或定义的文档训练
     vn.train(
-        question=item["question"],
-        sql=item["sql"],
+        documentation="""
+        -收缴率定义为：物业费实收/物业费应收 * 100%
+        -2024年收缴率：2024年物业费实收/2024年物业费应收 * 100%
+        -集团：中国金茂
+        -狗：金茂狗
+    """
     )
 
-# SQL查询训练
-# vn.train(sql="SELECT * FROM my-table WHERE name = 'John Doe'")
+# QA训练函数
+def train_qa_data():
+    try:
+        # 获取当前文件绝对路径
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        project_root = os.path.dirname(current_dir)
+        training_data_path = os.path.join(project_root, "main", "data", "train-sql-qa.json")
+        
+        # 检查文件是否存在
+        if not os.path.exists(training_data_path):
+            logger.warning(f"训练数据文件不存在: {training_data_path}")
+            # 创建目录
+            os.makedirs(os.path.dirname(training_data_path), exist_ok=True)
+            # 创建空的训练数据文件
+            with open(training_data_path, "w") as f:
+                json.dump([], f)
+            logger.info(f"创建了空的训练数据文件: {training_data_path}")
+            return True
+            
+        # 从train-sql-qa.json文件中读取SQL QA数据
+        with open(training_data_path, "r") as f:
+            sql_qa_data = json.load(f)
 
-from vanna.flask import VannaFlaskApp
+        # 训练SQL QA数据
+        for item in sql_qa_data:
+            vn.train(
+                question=item["question"],
+                sql=item["sql"],
+            )
+        return True
+    except Exception as e:
+        logger.error(f"训练QA数据失败: {str(e)}")
+        return False
 
-app = VannaFlaskApp(vn, allow_llm_to_see_data=True)
-app.run()
+# 执行初始化训练
+initialize_training()
+# 执行QA训练
+train_qa_data()
+
+# 导出vn实例供FastAPI使用
+__all__ = ['vn', 'create_vanna_instance']
+
+# 如果直接运行此文件，则启动FastAPI服务
+if __name__ == '__main__':
+    from backend.app import app
+    import uvicorn
+    uvicorn.run(app, host='0.0.0.0', port=int(os.getenv('PORT', 8000)), reload=True)

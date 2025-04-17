@@ -18,8 +18,11 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 dependencies = [
-    "requests", "tabulate", "plotly", "pandas", "sqlparse", "kaleido", "flask", "flask-sock", "flasgger", "sqlalchemy"
+    "requests", "tabulate", "plotly", "pandas", "sqlparse", "kaleido==0.2.1", "flask", "flask-sock", "flasgger", "sqlalchemy",
+    "fastapi>=0.110.0", "uvicorn[standard]>=0.28.0", "python-multipart", "python-dotenv>=1.0.0", "pydantic>=2.6.0"
 ]
+
+packages = ["backend","src"]
 
 [project.urls]
 "Homepage" = "https://github.com/vanna-ai/vanna"
