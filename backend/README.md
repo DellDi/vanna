@@ -96,10 +96,10 @@ POST /api/v0/train
 ```bash
 # 安装依赖
 uv pip install -e .
-
+# 注意window，需要安装Microsoft C++ Build Tools
+https://visualstudio.microsoft.com/visual-cpp-build-tools/
 # 安装可选依赖 - mysql, chromadb, openai
-uv pip install 'vanna[mysql,chromadb,openai]'
-
+uv pip install 'vanna[chromadb,openai,mysql]'
 # 启动服务
 uv run -m backend.app
 ```

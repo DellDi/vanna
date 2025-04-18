@@ -1,3 +1,11 @@
+<!--
+ * @Author: delldi 875372314@qq.com
+ * @Date: 2025-04-18 14:56:31
+ * @LastEditors: delldi 875372314@qq.com
+ * @LastEditTime: 2025-04-18 15:40:07
+ * @FilePath: \vanna\README.md
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 # chatbi（原 Vanna 项目二次开发版）
 
 > 由 DellDi 基于 Vanna 项目 fork 并深度重构，聚焦于现代化、模块化的企业级数据智能 API 解决方案。
@@ -24,6 +32,13 @@ chatbi 是一个以 FastAPI 为核心、前后端解耦、支持自然语言数�
 ```
 
 ## 快速开始
+
+- 环境变量
+
+```bash
+cp .env.template .env
+```
+
 
 - 后端入口：`backend/app.py`
 ```bash

@@ -1,214 +1,312 @@
 "use client"
 
-import type React from "react"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
+import { toast } from "sonner"
 
-import { useState } from "react"
-import { Mic, Send, Settings, Plus, MessageSquare, Database } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { DellDiLogo } from "@/components/logo"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { useRouter } from "next/navigation"
+import { Message } from "@/lib/types"
+import { Sidebar } from "@/components/layout/sidebar"
+import { MessageList } from "@/components/chat/message-list"
+import { MessageInput } from "@/components/chat/message-input"
+import { 
+  generateSQLAction, 
+  runSQLAction, 
+  generatePlotlyFigureAction,
+  loadQuestionAction,
+  generateFollowupQuestionsAction,
+  generateExampleQuestionsAction,
+  createNewConversationAction
+} from "@/lib/actions"
 
 export default function ChatInterface() {
   const router = useRouter()
-  const [messages, setMessages] = useState([
-    {
-      type: "user",
-      content: "金茂和狗狗的去年收入分别是多少?",
-    },
-    {
-      type: "assistant",
-      content: `SELECT
-  CASE
-    WHEN dwd_organization_name = '中国金茂' THEN '金茂'
-    WHEN dwd_organization_name = '金茂狗' THEN '狗'
-  END AS organization,
-  SUM(CAST(chargePaid AS DECIMAL(10, 2))) AS total_income_last_year
-FROM ns_dws.dws_target_finance tf
-JOIN ns_dws.dwd_organizations o ON tf.enterpriseID = o.enterpriseId
-WHERE currentDate BETWEEN '2022-01' AND '2022-12'
-GROUP BY
-  CASE
-    WHEN dwd_organization_name = '中国金茂' THEN '金茂'
-    WHEN dwd_organization_name = '金茂狗' THEN '狗'
-  END;`,
-    },
-  ])
-  const [inputValue, setInputValue] = useState("")
+  const searchParams = useSearchParams()
+  const questionId = searchParams.get('id')
+  
+  const [messages, setMessages] = useState<Message[]>([])
+  const [loading, setLoading] = useState(false)
+  const [currentId, setCurrentId] = useState<string | null>(null)
+  const [followupQuestions, setFollowupQuestions] = useState<string[]>([])
+  
+  // 示例问题状态
+  const [exampleQuestions, setExampleQuestions] = useState<string[]>([])
 
-  const handleSendMessage = () => {
-    if (inputValue.trim()) {
-      setMessages([...messages, { type: "user", content: inputValue }])
-      setInputValue("")
-      // In a real app, you would send the message to an API and get a response
+  // 获取示例问题
+  const fetchExampleQuestions = async () => {
+    try {
+      const response = await generateExampleQuestionsAction()
+      if (response && response.questions && Array.isArray(response.questions)) {
+        setExampleQuestions(response.questions)
+      }
+    } catch (error) {
+      console.error('获取示例问题失败:', error)
     }
   }
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendMessage()
+  // 新建对话函数
+  const createNewConversation = async () => {
+    try {
+      // 调用新建对话接口
+      await createNewConversationAction()
+      
+      // 清除当前对话状态
+      setMessages([])
+      setCurrentId(null)
+      setFollowupQuestions([])
+      
+      // 显示欢迎消息
+      setMessages([
+        {
+          type: "assistant",
+          content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
+        }
+      ])
+      
+      // 获取示例问题
+      fetchExampleQuestions()
+      
+      // 更新URL，移除可能的id参数
+      router.push('/', { scroll: false })
+    } catch (error) {
+      console.error('新建对话失败:', error)
+      toast.error('新建对话失败')
+    }
+  }
+  
+  // 监听新建对话事件
+  useEffect(() => {
+    const handleNewConversation = () => {
+      createNewConversation()
+    }
+    
+    // 添加事件监听
+    window.addEventListener("new-conversation", handleNewConversation)
+    
+    // 清理函数
+    return () => {
+      window.removeEventListener("new-conversation", handleNewConversation)
+    }
+  }, [])
+
+  // 如果URL中有问题ID，则加载该问题
+  useEffect(() => {
+    if (questionId) {
+      loadQuestion(questionId)
+    } else if (messages.length === 0) {
+      // 首次加载显示欢迎消息
+      setMessages([
+        {
+          type: "assistant",
+          content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
+        }
+      ])
+      
+      // 获取示例问题
+      fetchExampleQuestions()
+    }
+  }, [questionId, messages.length])
+
+  // 加载已存问题
+  const loadQuestion = async (id: string) => {
+    try {
+      setLoading(true)
+      const response = await loadQuestionAction(id)
+      
+      setMessages([
+        { type: "user", content: response.question },
+        { type: "assistant", content: response.sql }
+      ])
+      
+      setCurrentId(response.id)
+      
+      if (response.followup_questions && response.followup_questions.length > 0) {
+        setFollowupQuestions(response.followup_questions)
+      }
+      
+    } catch (error) {
+      console.error("加载问题失败:", error)
+      toast.error("加载问题失败")
+    } finally {
+      setLoading(false)
     }
   }
 
-  const navigateToTrainingData = () => {
-    router.push("/training-data")
+  // 发送消息并生成SQL查询
+  const handleSendMessage = async (message: string) => {
+    try {
+      setLoading(true)
+      setMessages(prev => [...prev, { type: "user", content: message }])
+      
+      // 生成SQL查询
+      const response = await generateSQLAction(message)
+      
+      // 检查响应中是否包含错误信息
+      if (response.text.includes("insufficient_context") || response.text.includes("无法确定")) {
+        setMessages(prev => [...prev, { 
+          type: "assistant", 
+          content: "抱歉，我无法确定相关的具体表结构和字段信息，需要更多上下文来生成准确的SQL查询。请提供更多信息或尝试其他问题。" 
+        }])
+        setCurrentId(null)
+        return
+      }
+      
+      setMessages(prev => [...prev, { type: "assistant", content: response.text }])
+      setCurrentId(response.id)
+      
+      // 尝试生成后续问题，但不阻止主流程
+      try {
+        await generateFollowupQuestions(response.id)
+      } catch (followupError) {
+        console.error("生成后续问题失败:", followupError)
+        // 不向用户显示这个错误，静默处理
+      }
+      
+    } catch (error) {
+      console.error("生成SQL查询失败:", error)
+      toast.error("生成SQL查询失败")
+      setMessages(prev => [...prev, { type: "assistant", content: "抱歉，生成SQL查询时出现错误。" }])
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // 执行SQL查询
+  const handleRunQuery = async (id: string) => {
+    if (!currentId) {
+      toast.error("没有可执行的查询ID")
+      return
+    }
+    
+    try {
+      setLoading(true)
+      
+      // 执行SQL查询
+      const dfResponse = await runSQLAction(currentId)
+      
+      // 将结果添加到消息中
+      if (dfResponse && dfResponse.df) {
+        try {
+          // 解析JSON数据并格式化显示
+          const data = JSON.parse(dfResponse.df)
+          const formattedData = JSON.stringify(data, null, 2)
+          
+          setMessages(prev => [...prev, { 
+            type: "assistant", 
+            content: `查询结果:\n${formattedData}` 
+          }])
+          
+          // 尝试生成可视化
+          try {
+            const figResponse = await generatePlotlyFigureAction(currentId)
+            // 这里可以添加显示图表的逻辑
+          } catch (figError) {
+            console.error("生成可视化失败:", figError)
+            // 不阻止主流程
+          }
+          
+          toast.success("查询执行成功")
+        } catch (parseError) {
+          console.error("解析查询结果失败:", parseError)
+          setMessages(prev => [...prev, { 
+            type: "assistant", 
+            content: `查询结果: ${dfResponse.df}` 
+          }])
+        }
+      }
+    } catch (error) {
+      console.error("执行查询失败:", error)
+      toast.error("执行查询失败")
+      setMessages(prev => [...prev, { 
+        type: "assistant", 
+        content: "执行查询失败，请检查SQL语句或稍后再试。" 
+      }])
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // 生成后续问题
+  const generateFollowupQuestions = async (id: string) => {
+    if (!id) return
+    
+    try {
+      const response = await generateFollowupQuestionsAction(id)
+      if (response && response.questions && Array.isArray(response.questions)) {
+        setFollowupQuestions(response.questions)
+      } else {
+        // 如果返回的数据结构不符合预期，设置为空数组
+        setFollowupQuestions([])
+      }
+    } catch (error) {
+      console.error("生成后续问题失败:", error)
+      // 出错时设置为空数组，避免显示之前的后续问题
+      setFollowupQuestions([])
+    }
   }
 
   return (
     <div className="flex h-screen bg-background">
-      {/* Sidebar */}
-      <div className="w-72 border-r flex flex-col bg-card">
-        <div className="p-4 flex items-center gap-2 border-b">
-          <DellDiLogo className="h-8 w-8 text-primary" />
-          <span className="text-xl font-semibold text-primary">DellDi</span>
-          <ThemeToggle className="ml-auto" />
-        </div>
+      {/* 侧边栏 */}
+      <Sidebar currentPage="chat" />
 
-        {/* Button area at the top left */}
-        <div className="p-4 border-b">
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="flex-1">
-              <Database size={14} className="mr-1" />
-              Connect
-            </Button>
-            <Button variant="outline" size="sm" className="flex-1" onClick={navigateToTrainingData}>
-              <Settings size={14} className="mr-1" />
-              Settings
-            </Button>
-          </div>
-        </div>
-
-        <div className="p-4">
-          <Button className="w-full justify-start gap-2" variant="default">
-            <Plus size={16} />
-            New conversation
-          </Button>
-        </div>
-
-        <div className="px-4 py-2">
-          <h3 className="text-sm font-medium text-muted-foreground mb-2">Recent Conversations</h3>
-        </div>
-
-        <div className="overflow-y-auto flex-1 px-2">
-          <div className="space-y-1">
-            <Button variant="ghost" className="w-full justify-start text-left font-normal h-auto py-2">
-              <div className="flex items-center gap-2 w-full">
-                <MessageSquare size={14} className="shrink-0 text-muted-foreground" />
-                <span className="truncate">金茂的收入</span>
-              </div>
-            </Button>
-
-            <Button variant="secondary" className="w-full justify-start text-left font-normal h-auto py-2">
-              <div className="flex items-center gap-2 w-full">
-                <MessageSquare size={14} className="shrink-0" />
-                <span className="truncate">金茂和狗狗的去年收入分别是多少?</span>
-              </div>
-            </Button>
-
-            <Button variant="ghost" className="w-full justify-start text-left font-normal h-auto py-2">
-              <div className="flex items-center gap-2 w-full">
-                <MessageSquare size={14} className="shrink-0 text-muted-foreground" />
-                <span className="truncate">狗的去年收入</span>
-              </div>
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-auto p-4 border-t flex items-center justify-between">
-          <Badge variant="outline" className="text-xs bg-primary/10 text-primary">
-            v1.0.2
-          </Badge>
-          <Button variant="ghost" size="sm" className="text-xs">
-            Sign out
-          </Button>
-        </div>
-      </div>
-
-      {/* Main content */}
+      {/* 主要内容 */}
       <div className="flex-1 flex flex-col">
         <div className="text-center py-12 px-4">
           <h1 className="text-4xl font-bold bg-linear-to-r from-primary to-primary/60 text-transparent bg-clip-text">
-            Welcome to DellDi
+            欢迎使用 DellDi
           </h1>
-          <p className="text-muted-foreground mt-2 text-lg">Your AI-powered copilot for SQL queries.</p>
+          <p className="text-muted-foreground mt-2 text-lg">您的 AI 驱动的 SQL 查询助手</p>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-8">
-          {messages.map((message, index) => (
-            <div key={index} className="animate-slideIn">
-              {message.type === "user" && (
-                <div className="flex items-start gap-4 max-w-4xl mx-auto">
-                  <Avatar className="h-10 w-10 border">
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-2">
-                    <div className="flex items-center">
-                      <span className="font-medium">You</span>
-                      <span className="text-xs text-muted-foreground ml-2">Just now</span>
-                    </div>
-                    <p className="text-foreground">{message.content}</p>
-                  </div>
-                </div>
-              )}
-
-              {message.type === "assistant" && (
-                <div className="flex items-start gap-4 max-w-4xl mx-auto mt-6">
-                  <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
-                    <AvatarFallback>DI</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 space-y-4">
-                    <div className="flex items-center">
-                      <span className="font-medium">DellDi</span>
-                      <span className="text-xs text-muted-foreground ml-2">Just now</span>
-                    </div>
-
-                    <Card className="overflow-hidden border border-muted">
-                      <CardContent className="p-0">
-                        <pre className="font-mono text-sm p-4 overflow-x-auto bg-black text-green-400">
-                          {message.content}
-                        </pre>
-                      </CardContent>
-                    </Card>
-
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <Button variant="outline" className="gap-1">
-                        <span>Copy SQL</span>
-                      </Button>
-                      <Button variant="default" className="gap-1">
-                        <span>Run Query</span>
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-
-        <div className="border-t p-4">
-          <div className="max-w-4xl mx-auto relative">
-            <Input
-              placeholder="Ask me a question about your data..."
-              className="pr-24 py-6 text-base"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              onKeyDown={handleKeyDown}
-            />
-            <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-1">
-              <Button variant="ghost" size="icon" className="rounded-full h-9 w-9">
-                <Mic size={18} />
-              </Button>
-              <Button size="icon" className="rounded-full h-9 w-9" onClick={handleSendMessage}>
-                <Send size={16} />
-              </Button>
+        {/* 示例问题或后续问题建议 */}
+        {(followupQuestions.length > 0 || (messages.length <= 1 && exampleQuestions.length > 0)) && (
+          <div className="px-6 mb-4">
+            <div className="max-w-4xl mx-auto">
+              <h3 className="text-sm font-medium text-muted-foreground mb-2">
+                {followupQuestions.length > 0 ? "您可能想问：" : "示例问题："}
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {followupQuestions.length > 0 ? (
+                  // 显示后续问题
+                  followupQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      className="text-sm px-3 py-1.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
+                      onClick={() => handleSendMessage(question)}
+                      disabled={loading}
+                    >
+                      {question}
+                    </button>
+                  ))
+                ) : (
+                  // 显示示例问题
+                  exampleQuestions.map((question, index) => (
+                    <button
+                      key={index}
+                      className="text-sm px-3 py-1.5 bg-primary/10 text-primary rounded-full hover:bg-primary/20 transition-colors"
+                      onClick={() => handleSendMessage(question)}
+                      disabled={loading}
+                    >
+                      {question}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
+
+        {/* 消息列表 */}
+        <MessageList 
+          messages={messages} 
+          onRunQuery={handleRunQuery}
+        />
+
+        {/* 消息输入框 */}
+        <MessageInput 
+          onSendMessage={handleSendMessage}
+          disabled={loading}
+        />
       </div>
     </div>
   )

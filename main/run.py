@@ -49,7 +49,7 @@ def create_vanna_instance():
 vn = create_vanna_instance()
 
 # 初始化训练
-def initialize_training():
+def initialize_training(vn: MyVanna=vn):
     # 信息模式查询可能需要根据您的数据库进行一些调整。这是一个很好的起点。限定为ns_dws库
     df_information_schema = vn.run_sql(
         "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'ns_dws'"
@@ -84,14 +84,14 @@ def train_qa_data():
             logger.warning(f"训练数据文件不存在: {training_data_path}")
             # 创建目录
             os.makedirs(os.path.dirname(training_data_path), exist_ok=True)
-            # 创建空的训练数据文件
-            with open(training_data_path, "w") as f:
+            # 创建空的训练数据文件，指定UTF-8编码
+            with open(training_data_path, "w", encoding="utf-8") as f:
                 json.dump([], f)
             logger.info(f"创建了空的训练数据文件: {training_data_path}")
             return True
             
-        # 从train-sql-qa.json文件中读取SQL QA数据
-        with open(training_data_path, "r") as f:
+        # 从train-sql-qa.json文件中读取SQL QA数据，指定UTF-8编码
+        with open(training_data_path, "r", encoding="utf-8") as f:
             sql_qa_data = json.load(f)
 
         # 训练SQL QA数据
@@ -105,7 +105,7 @@ def train_qa_data():
         logger.error(f"训练QA数据失败: {str(e)}")
         return False
 
-# 导出vn实例供FastAPI使用
+# 导出vn实例供FastAPI使用~
 __all__ = ['vn', 'create_vanna_instance']
 
 # 只有在作为主模块运行时才执行训练初始化
