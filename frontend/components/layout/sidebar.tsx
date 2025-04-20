@@ -42,18 +42,18 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
 
   const navigateToChat = () => router.push("/")
   const navigateToTrainingData = () => router.push("/training-data")
-  
+
   // 新建对话功能
   const handleNewConversation = () => {
     // 清除当前对话，跳转到主页
-    router.push("/")
+    router.replace("/")
     // 通知主页面清除当前对话状态
     window.dispatchEvent(new CustomEvent("new-conversation"))
   }
-  
+
   const handleQuestionClick = (id: string) => {
     // 实现加载问题的逻辑
-    router.push(`/?id=${id}`)
+    router.replace(`/?id=${id}`)
   }
 
   return (
@@ -71,9 +71,9 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
             <Database size={14} className="mr-1" />
             连接
           </Button>
-          <Button 
-            variant={currentPage === "training" ? "secondary" : "outline"} 
-            size="sm" 
+          <Button
+            variant={currentPage === "training" ? "secondary" : "outline"}
+            size="sm"
             className="flex-1"
             onClick={navigateToTrainingData}
           >
@@ -86,8 +86,8 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
       {/* 主要操作按钮 */}
       <div className="p-4">
         {currentPage === "chat" ? (
-          <Button 
-            className="w-full justify-start gap-2" 
+          <Button
+            className="w-full justify-start gap-2"
             variant="default"
             onClick={handleNewConversation}
           >

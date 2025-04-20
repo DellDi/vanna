@@ -27,14 +27,14 @@ class MyVanna(ChromaDB_VectorStore, QianWenAI_Chat):
 # 创建Vanna实例
 def create_vanna_instance():
     vn = MyVanna(config=qianwen_config)
-    
+
     # 连接到MySQL数据库, 获取环境变量
     MYSQL_HOST = os.getenv("MYSQL_HOST")
     MYSQL_USER = os.getenv("MYSQL_USER")
     MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
     MYSQL_PORT = os.getenv("MYSQL_PORT")
     MYSQL_DB = os.getenv("MYSQL_DB")
-    
+
     vn.connect_to_mysql(
         host=MYSQL_HOST,
         dbname=MYSQL_DB,
@@ -42,7 +42,7 @@ def create_vanna_instance():
         password=MYSQL_PASSWORD,
         port=int(MYSQL_PORT),
     )
-    
+
     return vn
 
 # 全局Vanna实例
@@ -54,13 +54,13 @@ def initialize_training(vn: MyVanna=vn):
     df_information_schema = vn.run_sql(
         "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'ns_dws'"
     )
-    
+
     # 这将把信息模式分解成 LLM 可以引用的更小的块
     plan = vn.get_training_plan_generic(df_information_schema)
-    
+
     # 使用信息模式训练
     vn.train(plan=plan)
-    
+
     # 业务术语或定义的文档训练
     vn.train(
         documentation="""
@@ -71,14 +71,15 @@ def initialize_training(vn: MyVanna=vn):
     """
     )
 
+
 # QA训练函数
-def train_qa_data():
+def train_qa_data(vn: MyVanna = vn):
     try:
         # 获取当前文件绝对路径
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(current_dir)
         training_data_path = os.path.join(project_root, "main", "data", "train-sql-qa.json")
-        
+
         # 检查文件是否存在
         if not os.path.exists(training_data_path):
             logger.warning(f"训练数据文件不存在: {training_data_path}")
@@ -89,7 +90,7 @@ def train_qa_data():
                 json.dump([], f)
             logger.info(f"创建了空的训练数据文件: {training_data_path}")
             return True
-            
+
         # 从train-sql-qa.json文件中读取SQL QA数据，指定UTF-8编码
         with open(training_data_path, "r", encoding="utf-8") as f:
             sql_qa_data = json.load(f)
@@ -104,6 +105,7 @@ def train_qa_data():
     except Exception as e:
         logger.error(f"训练QA数据失败: {str(e)}")
         return False
+
 
 # 导出vn实例供FastAPI使用~
 __all__ = ['vn', 'create_vanna_instance']

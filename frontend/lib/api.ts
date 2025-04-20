@@ -2,10 +2,11 @@
  * API服务层 - 处理与后端的所有通信
  */
 
-import { 
-  QuestionListResponse, 
-  GenerateSQLResponse, 
-  DataFrameResponse, 
+import {
+  InitializeResponse,
+  QuestionListResponse,
+  GenerateSQLResponse,
+  DataFrameResponse,
   PlotlyFigureResponse,
   QuestionCacheResponse,
   QuestionHistoryResponse,
@@ -14,6 +15,15 @@ import {
 } from './types';
 
 const API_BASE_URL = `${process.env.NEXT_FAST_API_BASE_URL}/api/v0`;
+
+export async function initialize(): Promise<InitializeResponse> {
+  const response = await fetch(`${API_BASE_URL}/initialize`);
+  if (!response.ok) {
+    throw new Error(`请求失败: ${response.status}`);
+  }
+  return response.json();
+}
+
 
 /**
  * 生成问题列表`
@@ -88,7 +98,7 @@ export async function removeTrainingData(id: string): Promise<{success: boolean}
     },
     body: JSON.stringify({ id }),
   });
-  
+
   if (!response.ok) {
     throw new Error(`请求失败: ${response.status}`);
   }
@@ -106,7 +116,7 @@ export async function addTrainingData(data: TrainRequest): Promise<{id: string}>
     },
     body: JSON.stringify(data),
   });
-  
+
   if (!response.ok) {
     throw new Error(`请求失败: ${response.status}`);
   }

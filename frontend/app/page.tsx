@@ -8,9 +8,10 @@ import { Message } from "@/lib/types"
 import { Sidebar } from "@/components/layout/sidebar"
 import { MessageList } from "@/components/chat/message-list"
 import { MessageInput } from "@/components/chat/message-input"
-import { 
-  generateSQLAction, 
-  runSQLAction, 
+import {
+  initializeAction,
+  generateSQLAction,
+  runSQLAction,
   generatePlotlyFigureAction,
   loadQuestionAction,
   generateFollowupQuestionsAction,
@@ -22,12 +23,12 @@ export default function ChatInterface() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const questionId = searchParams.get('id')
-  
+
   const [messages, setMessages] = useState<Message[]>([])
   const [loading, setLoading] = useState(false)
   const [currentId, setCurrentId] = useState<string | null>(null)
   const [followupQuestions, setFollowupQuestions] = useState<string[]>([])
-  
+
   // 示例问题状态
   const [exampleQuestions, setExampleQuestions] = useState<string[]>([])
 
@@ -48,12 +49,12 @@ export default function ChatInterface() {
     try {
       // 调用新建对话接口
       await createNewConversationAction()
-      
+
       // 清除当前对话状态
       setMessages([])
       setCurrentId(null)
       setFollowupQuestions([])
-      
+
       // 显示欢迎消息
       setMessages([
         {
@@ -61,10 +62,10 @@ export default function ChatInterface() {
           content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
         }
       ])
-      
+
       // 获取示例问题
       fetchExampleQuestions()
-      
+
       // 更新URL，移除可能的id参数
       router.push('/', { scroll: false })
     } catch (error) {
@@ -72,16 +73,16 @@ export default function ChatInterface() {
       toast.error('新建对话失败')
     }
   }
-  
+
   // 监听新建对话事件
   useEffect(() => {
     const handleNewConversation = () => {
       createNewConversation()
     }
-    
+
     // 添加事件监听
     window.addEventListener("new-conversation", handleNewConversation)
-    
+
     // 清理函数
     return () => {
       window.removeEventListener("new-conversation", handleNewConversation)
@@ -93,36 +94,50 @@ export default function ChatInterface() {
     if (questionId) {
       loadQuestion(questionId)
     } else if (messages.length === 0) {
-      // 首次加载显示欢迎消息
-      setMessages([
-        {
-          type: "assistant",
-          content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
+      // 首次加载时初始化系统
+      const initialize = async () => {
+        try {
+          // 调用初始化接口
+          await initializeAction()
+
+          // 首次加载显示欢迎消息
+          setMessages([
+            {
+              type: "assistant",
+              content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
+            }
+          ])
+
+          // 获取示例问题
+          fetchExampleQuestions()
+        } catch (error) {
+          console.error('初始化失败:', error)
+          toast.error('系统初始化失败，请刷新页面重试')
         }
-      ])
-      
-      // 获取示例问题
-      fetchExampleQuestions()
+      }
+
+      initialize()
     }
   }, [questionId, messages.length])
+
 
   // 加载已存问题
   const loadQuestion = async (id: string) => {
     try {
       setLoading(true)
       const response = await loadQuestionAction(id)
-      
+
       setMessages([
         { type: "user", content: response.question },
         { type: "assistant", content: response.sql }
       ])
-      
+
       setCurrentId(response.id)
-      
+
       if (response.followup_questions && response.followup_questions.length > 0) {
         setFollowupQuestions(response.followup_questions)
       }
-      
+
     } catch (error) {
       console.error("加载问题失败:", error)
       toast.error("加载问题失败")
@@ -136,23 +151,23 @@ export default function ChatInterface() {
     try {
       setLoading(true)
       setMessages(prev => [...prev, { type: "user", content: message }])
-      
+
       // 生成SQL查询
       const response = await generateSQLAction(message)
-      
+
       // 检查响应中是否包含错误信息
       if (response.text.includes("insufficient_context") || response.text.includes("无法确定")) {
-        setMessages(prev => [...prev, { 
-          type: "assistant", 
-          content: "抱歉，我无法确定相关的具体表结构和字段信息，需要更多上下文来生成准确的SQL查询。请提供更多信息或尝试其他问题。" 
+        setMessages(prev => [...prev, {
+          type: "assistant",
+          content: "抱歉，我无法确定相关的具体表结构和字段信息，需要更多上下文来生成准确的SQL查询。请提供更多信息或尝试其他问题。"
         }])
         setCurrentId(null)
         return
       }
-      
+
       setMessages(prev => [...prev, { type: "assistant", content: response.text }])
       setCurrentId(response.id)
-      
+
       // 尝试生成后续问题，但不阻止主流程
       try {
         await generateFollowupQuestions(response.id)
@@ -160,7 +175,7 @@ export default function ChatInterface() {
         console.error("生成后续问题失败:", followupError)
         // 不向用户显示这个错误，静默处理
       }
-      
+
     } catch (error) {
       console.error("生成SQL查询失败:", error)
       toast.error("生成SQL查询失败")
@@ -169,32 +184,32 @@ export default function ChatInterface() {
       setLoading(false)
     }
   }
-  
+
   // 执行SQL查询
   const handleRunQuery = async (id: string) => {
     if (!currentId) {
       toast.error("没有可执行的查询ID")
       return
     }
-    
+
     try {
       setLoading(true)
-      
+
       // 执行SQL查询
       const dfResponse = await runSQLAction(currentId)
-      
+
       // 将结果添加到消息中
       if (dfResponse && dfResponse.df) {
         try {
           // 解析JSON数据并格式化显示
           const data = JSON.parse(dfResponse.df)
           const formattedData = JSON.stringify(data, null, 2)
-          
-          setMessages(prev => [...prev, { 
-            type: "assistant", 
-            content: `查询结果:\n${formattedData}` 
+
+          setMessages(prev => [...prev, {
+            type: "assistant",
+            content: `查询结果:\n${formattedData}`
           }])
-          
+
           // 尝试生成可视化
           try {
             const figResponse = await generatePlotlyFigureAction(currentId)
@@ -203,32 +218,32 @@ export default function ChatInterface() {
             console.error("生成可视化失败:", figError)
             // 不阻止主流程
           }
-          
+
           toast.success("查询执行成功")
         } catch (parseError) {
           console.error("解析查询结果失败:", parseError)
-          setMessages(prev => [...prev, { 
-            type: "assistant", 
-            content: `查询结果: ${dfResponse.df}` 
+          setMessages(prev => [...prev, {
+            type: "assistant",
+            content: `查询结果: ${dfResponse.df}`
           }])
         }
       }
     } catch (error) {
       console.error("执行查询失败:", error)
       toast.error("执行查询失败")
-      setMessages(prev => [...prev, { 
-        type: "assistant", 
-        content: "执行查询失败，请检查SQL语句或稍后再试。" 
+      setMessages(prev => [...prev, {
+        type: "assistant",
+        content: "执行查询失败，请检查SQL语句或稍后再试。"
       }])
     } finally {
       setLoading(false)
     }
   }
-  
+
   // 生成后续问题
   const generateFollowupQuestions = async (id: string) => {
     if (!id) return
-    
+
     try {
       const response = await generateFollowupQuestionsAction(id)
       if (response && response.questions && Array.isArray(response.questions)) {
@@ -297,13 +312,13 @@ export default function ChatInterface() {
         )}
 
         {/* 消息列表 */}
-        <MessageList 
-          messages={messages} 
+        <MessageList
+          messages={messages}
           onRunQuery={handleRunQuery}
         />
 
         {/* 消息输入框 */}
-        <MessageInput 
+        <MessageInput
           onSendMessage={handleSendMessage}
           disabled={loading}
         />

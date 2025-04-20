@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from main.run import vn
 from backend.cache import MemoryCache
+from main.run import initialize_training,train_qa_data
 
 # 初始化缓存和路由
 cache = MemoryCache()
@@ -25,6 +26,10 @@ def require_cache(fields: List[str]):
                 raise HTTPException(status_code=400, detail=f"No {field} found")
         return {"id": id, **{field: cache.get(id=id, field=field) for field in fields}}
     return Depends(dependency)
+
+class InitializeResponse(BaseModel):
+    type: str = Field("initialize", description="响应类型")
+    message: str = Field(..., description="初始化消息")
 
 # 响应模型
 class QuestionListResponse(BaseModel):
@@ -55,6 +60,13 @@ class TrainRequest(BaseModel):
     sql: Optional[str] = Field(None, description="SQL查询")
     ddl: Optional[str] = Field(None, description="DDL语句")
     documentation: Optional[str] = Field(None, description="文档内容")
+
+@router.get('/initialize', response_model=InitializeResponse, summary="初始化训练")
+async def initialize():
+    initialize_training()
+    train_qa_data()
+    return {"type": "initialize", "message": "初始化完成"}
+
 
 # 路由定义
 @router.get('/generate_questions', response_model=QuestionListResponse, summary="生成问题列表")

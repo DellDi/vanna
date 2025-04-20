@@ -3,10 +3,11 @@
  */
 'use server'
 
-import { 
-  QuestionListResponse, 
-  GenerateSQLResponse, 
-  DataFrameResponse, 
+import {
+  InitializeResponse,
+  QuestionListResponse,
+  GenerateSQLResponse,
+  DataFrameResponse,
   PlotlyFigureResponse,
   QuestionCacheResponse,
   QuestionHistoryResponse,
@@ -15,6 +16,16 @@ import {
 
 import * as api from './api';
 import { revalidatePath } from 'next/cache';
+
+export async function initializeAction(): Promise<InitializeResponse> {
+  try {
+    return await api.initialize();
+  } catch (error) {
+    console.error('初始化失败:', error);
+    throw new Error('初始化失败');
+  }
+}
+
 
 /**
  * 生成问题列表
@@ -37,16 +48,16 @@ export async function generateSQLAction(question: string): Promise<GenerateSQLRe
     if (!question || question.trim() === '') {
       throw new Error('问题不能为空');
     }
-    
+
     // 生成SQL查询
     const response = await api.generateSQL(question);
-    
+
     // 处理可能的错误响应
     if (response.text.includes('insufficient_context') || response.text.includes('无法确定')) {
       // 虽然API返回了200，但内容表明生成失败
       console.warn('SQL生成警告: 上下文不足');
     }
-    
+
     return response;
   } catch (error) {
     console.error('生成SQL查询失败:', error);
@@ -67,7 +78,7 @@ export async function runSQLAction(id: string): Promise<DataFrameResponse> {
     if (!id) {
       throw new Error('无效的查询ID');
     }
-    
+
     // 执行查询
     return await api.runSQL(id);
   } catch (error) {
@@ -142,7 +153,7 @@ export async function generateFollowupQuestionsAction(id: string): Promise<Quest
     if (!id) {
       return { type: "question_list", questions: [], header: "" };
     }
-    
+
     // 尝试获取后续问题
     const response = await api.generateFollowupQuestions(id);
     return response;

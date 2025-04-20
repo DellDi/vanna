@@ -2,10 +2,18 @@
  * 定义系统中使用的类型
  */
 
+
 // 基本响应类型
 export interface BaseResponse {
   type: string;
 }
+
+// 初始化响应类型
+export interface InitializeResponse extends BaseResponse {
+  type: "initialize";
+  message: string;
+}
+
 
 // 问题列表响应
 export interface QuestionListResponse extends BaseResponse {

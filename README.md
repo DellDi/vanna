@@ -1,21 +1,13 @@
-<!--
- * @Author: delldi 875372314@qq.com
- * @Date: 2025-04-18 14:56:31
- * @LastEditors: delldi 875372314@qq.com
- * @LastEditTime: 2025-04-18 15:40:07
- * @FilePath: \vanna\README.md
- * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
--->
-# chatbi（原 Vanna 项目二次开发版）
+# ChatBI（原 Vanna 项目二次开发版）
 
 > 由 DellDi 基于 Vanna 项目 fork 并深度重构，聚焦于现代化、模块化的企业级数据智能 API 解决方案。
 
 ## 项目简介
 
-chatbi 是一个以 FastAPI 为核心、前后端解耦、支持自然语言数据分析的开源项目。项目在原 Vanna 基础上，进行了架构升级与功能优化，现已支持更清晰的模块分层和更易扩展的开发体验。
+ChatBI 是一个以 FastAPI 为核心、前后端解耦、支持自然语言数据分析的开源项目。项目在原 Vanna 基础上，进行了架构升级与功能优化，现已支持更清晰的模块分层和更易扩展的开发体验。
 
 - **主体维护人**：DellDi
-- **原项目溯源**：fork 自 Vanna，现已全面升级为 chatbi
+- **原项目溯源**：fork 自 Vanna，现已全面升级为 ChatBI
 
 ## 项目结构
 
@@ -66,4 +58,4 @@ uv run -m main.run
 
 ## 贡献与定制
 
-欢迎二次开发、定制与贡献！详细开发说明与接口文档请参见 `main/docs/`。
+详细开发说明与接口文档请参见 `main/docs/`。
