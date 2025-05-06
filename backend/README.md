@@ -22,6 +22,13 @@ backend/
 ├── app.py             # FastAPI 应用主入口
 ├── routes.py          # API 路由定义
 ├── cache.py           # 缓存实现
+├── models/            # 模型定义目录
+│   ├── __init__.py    # 模型包初始化
+│   ├── schemas.py     # API请求/响应模型(Pydantic)
+│   ├── database.py    # 数据库ORM模型(SQLAlchemy)
+│   ├── database_config.py # 数据库配置
+│   ├── repositories.py # 数据库仓库
+│   └── init_db.py     # 数据库初始化脚本
 └── README.md          # 项目文档
 ```
 
@@ -91,6 +98,119 @@ POST /api/v0/train
 - ReDoc: `/redoc`
 - OpenAPI JSON: `/openapi.json`
 
+## 数据库模型设计
+
+项目采用了分层设计，包含以下两类模型：
+
+### 1. API模型 (Pydantic)
+
+使用Pydantic模型进行请求/响应验证，主要包含：
+
+- `BaseResponse`: 所有响应的基础模型
+- `InitializeResponse`: 初始化响应
+- `QuestionListResponse`: 问题列表响应
+- `GenerateSQLResponse`: SQL生成响应
+- `DataFrameResponse`: 数据框响应
+- `PlotlyFigureResponse`: 图表响应
+- `TextResponse`: 文本响应
+- `RemoveTrainingDataRequest`: 删除训练数据请求
+- `TrainRequest`: 添加训练数据请求
+
+### 2. 数据库模型 (SQLAlchemy ORM)
+
+使用SQLAlchemy ORM定义数据库模型，支持PostgreSQL数据库：
+
+```mermaid
+classDiagram
+   Question "1" -- "1" SQLQuery : has
+   Question "1" -- "1" DataFrame : has
+   Question "1" -- "1" PlotlyFigure : has
+   Question "1" -- "1" Summary : has
+   Question "1" -- "*" FollowupQuestion : has
+   class Question {
+       +id: String
+       +text: String
+       +created_at: DateTime
+       +updated_at: DateTime
+   }
+   class SQLQuery {
+       +id: String
+       +question_id: String
+       +text: String
+       +created_at: DateTime
+   }
+   class DataFrame {
+       +id: String
+       +question_id: String
+       +data: JSON
+       +created_at: DateTime
+   }
+   class PlotlyFigure {
+       +id: String
+       +question_id: String
+       +figure_json: JSON
+       +created_at: DateTime
+   }
+   class Summary {
+       +id: String
+       +question_id: String
+       +text: String
+       +created_at: DateTime
+   }
+   class FollowupQuestion {
+       +id: String
+       +question_id: String
+       +text: String
+       +order: Integer
+       +created_at: DateTime
+   }
+   class TrainingData {
+       +id: String
+       +question: String
+       +sql: String
+       +ddl: String
+       +documentation: String
+       +created_at: DateTime
+       +updated_at: DateTime
+   }
+```
+
+### 3. 仓库模式 (Repository Pattern)
+
+采用仓库模式封装数据库操作，提供高级API接口：
+
+- `QuestionRepository`: 问题仓库
+- `SQLQueryRepository`: SQL查询仓库
+- `DataFrameRepository`: 数据框仓库
+- `PlotlyFigureRepository`: 图表仓库
+- `SummaryRepository`: 摘要仓库
+- `FollowupQuestionRepository`: 后续问题仓库
+- `TrainingDataRepository`: 训练数据仓库
+
+## 数据库配置
+
+项目支持多种数据库配置：
+
+### 1. 开发环境（SQLite）
+
+默认使用SQLite数据库，无需额外配置。
+
+### 2. 生产环境（PostgreSQL）
+
+通过环境变量配置数据库连接：
+
+```bash
+# PostgreSQL连接示例
+DATABASE_URL=postgresql://username:password@localhost:5432/chartbi
+```
+
+### 3. 初始化数据库
+
+```bash
+# 初始化数据库表
+python -m backend.models.init_db
+```
+
 ## 启动服务
 
 ```bash
@@ -98,8 +218,8 @@ POST /api/v0/train
 uv pip install -e .
 # 注意window，需要安装Microsoft C++ Build Tools
 https://visualstudio.microsoft.com/visual-cpp-build-tools/
-# 安装可选依赖 - mysql, chromadb, openai
-uv pip install 'vanna[chromadb,openai,mysql]'
+# 安装可选依赖 - mysql, chromadb, openai, postgres
+uv pip install 'vanna[chromadb,openai,mysql,postgres]'
 # 启动服务
 uv run -m backend.app
 ```

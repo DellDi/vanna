@@ -63,6 +63,8 @@ def require_cache(fields: List[str], optional_fields: List[str] = None):
             logger.error(f"❌ 缓存中不存在ID: {id}")
             raise HTTPException(status_code=400, detail=f"缓存中不存在ID: {id}")
 
+        logger.info(f"✅ 缓存中存在数据: {cache.cache[id]}")
+
         # 检查每个必需字段
         missing_fields = []
         for field in fields:
@@ -277,6 +279,7 @@ async def generate_followup_questions(
     """
     根据当前问题和数据生成后续问题
     """
+
     id = data["id"]
     df = data["df"]
     question = data["question"]
