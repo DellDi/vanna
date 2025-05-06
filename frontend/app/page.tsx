@@ -95,28 +95,28 @@ export default function ChatInterface() {
       loadQuestion(questionId)
     } else if (messages.length === 0) {
       // 首次加载时初始化系统
-      const initialize = async () => {
-        try {
-          // 调用初始化接口
-          await initializeAction()
+      // const initialize = async () => {
+      //   try {
+      //     // 调用初始化接口
+      //     await initializeAction()
 
-          // 首次加载显示欢迎消息
-          setMessages([
-            {
-              type: "assistant",
-              content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
-            }
-          ])
+      //     // 首次加载显示欢迎消息
+      //     setMessages([
+      //       {
+      //         type: "assistant",
+      //         content: "您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？"
+      //       }
+      //     ])
 
-          // 获取示例问题
-          fetchExampleQuestions()
-        } catch (error) {
-          console.error('初始化失败:', error)
-          toast.error('系统初始化失败，请刷新页面重试')
-        }
-      }
+      //     // 获取示例问题
+      //     fetchExampleQuestions()
+      //   } catch (error) {
+      //     console.error('初始化失败:', error)
+      //     toast.error('系统初始化失败，请刷新页面重试')
+      //   }
+      // }
 
-      initialize()
+      // initialize()
     }
   }, [questionId, messages.length])
 

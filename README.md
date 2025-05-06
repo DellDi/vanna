@@ -31,7 +31,10 @@ ChatBI 是一个以 FastAPI 为核心、前后端解耦、支持自然语言数�
 cp .env.template .env
 ```
 
-
+- 项目基础训练脚本：`main/run.py`
+```bash
+uv run -m main.run
+```
 - 后端入口：`backend/app.py`
 ```bash
 uv run -m backend.app
@@ -42,10 +45,7 @@ cd frontend
 pnpm install
 pnpm run dev
 ```
-- 项目基础训练脚本：`main/run.py`
-```bash
-uv run -m main.run
-```
+
 - 操作文档与详细说明：请查阅 `main/docs/` 目录
 
 ## 主要特性

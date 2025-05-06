@@ -18,10 +18,15 @@ export default function TrainingDataManagement() {
   const [searchQuery, setSearchQuery] = useState('')
   
   // 过滤后的训练数据
-  const filteredData = trainingData.filter(item => 
-    item.question.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    item.content.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredData = trainingData.filter(item => {
+    if (item.question) {
+      return item.question.toLowerCase().includes(searchQuery.toLowerCase())
+    }
+    if (item.content) {
+      return item.content.toLowerCase().includes(searchQuery.toLowerCase())
+    }
+    return false
+  })
 
   // 获取训练数据
   const fetchTrainingData = async () => {

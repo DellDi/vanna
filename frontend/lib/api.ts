@@ -14,7 +14,7 @@ import {
   TrainRequest
 } from './types';
 
-const API_BASE_URL = `${process.env.NEXT_FAST_API_BASE_URL}/api/v0`;
+const API_BASE_URL = `${process.env.NEXT_FAST_API_BASE_URL || ''}/api/v0`;
 
 export async function initialize(): Promise<InitializeResponse> {
   const response = await fetch(`${API_BASE_URL}/initialize`);
@@ -90,7 +90,7 @@ export async function getTrainingData(): Promise<DataFrameResponse> {
 /**
  * 删除训练数据
  */
-export async function removeTrainingData(id: string): Promise<{success: boolean}> {
+export async function removeTrainingData(id: string): Promise<{ success: boolean }> {
   const response = await fetch(`${API_BASE_URL}/remove_training_data`, {
     method: 'POST',
     headers: {
@@ -108,7 +108,7 @@ export async function removeTrainingData(id: string): Promise<{success: boolean}
 /**
  * 添加训练数据
  */
-export async function addTrainingData(data: TrainRequest): Promise<{id: string}> {
+export async function addTrainingData(data: TrainRequest): Promise<{ id: string }> {
   const response = await fetch(`${API_BASE_URL}/train`, {
     method: 'POST',
     headers: {
@@ -160,7 +160,7 @@ export async function getQuestionHistory(): Promise<QuestionHistoryResponse> {
  * 新建对话
  * 清除当前会话并初始化新的对话
  */
-export async function createNewConversation(): Promise<{success: boolean}> {
+export async function createNewConversation(): Promise<{ success: boolean }> {
   // 这里可以添加实际的API调用，如果后端提供了相应的接口
   // 当前我们在前端处理新建对话的逻辑，所以返回一个模拟的成功响应
   return { success: true };
