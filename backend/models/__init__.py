@@ -16,6 +16,8 @@ from .schemas import (
     TrainRequest,
     UpdateSQLRequest,
     RewrittenQuestionResponse,
+    DeleteQuestionRequest,
+    DeleteResponse,
     ConfigResponse,
     ErrorResponse
 )
@@ -65,6 +67,8 @@ __all__ = [
     'TrainRequest',
     'UpdateSQLRequest',
     'RewrittenQuestionResponse',
+    'DeleteQuestionRequest',
+    'DeleteResponse',
     'ConfigResponse',
     'ErrorResponse',
     

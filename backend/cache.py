@@ -57,6 +57,14 @@ class MemoryCache(Cache):
             for id in self.cache
         ]
 
-    def delete(self, id):
+    def delete(self, id, field=None):
         if id in self.cache:
-            del self.cache[id]
+            if field is not None:
+                if field in self.cache[id]:
+                    del self.cache[id][field]
+            else:
+                del self.cache[id]
+
+
+# 创建全局缓存实例
+cache = MemoryCache()

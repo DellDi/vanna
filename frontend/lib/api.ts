@@ -13,7 +13,8 @@ import {
   TrainingData,
   TrainRequest,
   TextResponse,
-  RewrittenQuestionResponse
+  RewrittenQuestionResponse,
+  DeleteResponse
 } from './types';
 
 const API_BASE_URL = `${process.env.NEXT_FAST_API_BASE_URL || ''}/api/v0`;
@@ -84,6 +85,27 @@ export async function generateRewrittenQuestion(lastQuestion: string, newQuestio
   
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
+  }
+  
+  return await response.json();
+}
+
+/**
+ * 删除问题记录
+ * @param id 要删除的问题ID
+ * @returns 删除操作响应
+ */
+export async function deleteQuestion(id: string): Promise<DeleteResponse> {
+  const response = await fetch(`${API_BASE_URL}/delete_question`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({ id })
+  });
+  
+  if (!response.ok) {
+    throw new Error(`删除失败: ${response.status}`);
   }
   
   return await response.json();

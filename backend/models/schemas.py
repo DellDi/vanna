@@ -97,9 +97,22 @@ class UpdateSQLRequest(BaseModel):
 
 # 重写问题响应
 class RewrittenQuestionResponse(BaseResponse):
-    """重写问题响应"""
+    """重写问题响应模型"""
     type: str = Field("rewritten_question", description="响应类型")
     question: str = Field(..., description="重写后的问题")
+
+
+class DeleteQuestionRequest(BaseModel):
+    """删除问题记录请求模型"""
+    id: str = Field(..., description="要删除的问题ID")
+
+
+class DeleteResponse(BaseResponse):
+    """删除操作响应模型"""
+    type: str = Field("delete", description="响应类型")
+    success: bool = Field(..., description="删除操作是否成功")
+    message: str = Field(..., description="操作结果消息")
+
 
 # 配置响应
 class ConfigResponse(BaseResponse):

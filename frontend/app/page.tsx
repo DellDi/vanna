@@ -181,13 +181,7 @@ export default function ChatInterface() {
       ])
       setCurrentId(response.id)
 
-      // 尝试生成后续问题，但不阻止主流程
-      try {
-        await generateFollowupQuestions(response.id)
-      } catch (followupError) {
-        console.error('生成后续问题失败:', followupError)
-        // 不向用户显示这个错误，静默处理
-      }
+     
     } catch (error) {
       console.error('生成SQL查询失败:', error)
       toast.error('生成SQL查询失败')
@@ -236,6 +230,14 @@ export default function ChatInterface() {
             console.error('生成可视化失败:', figError)
             // 不阻止主流程
           }
+
+          // 尝试生成后续问题，但不阻止主流程
+          // try {
+          //   await generateFollowupQuestions(currentId)
+          // } catch (followupError) {
+          //   console.error('生成后续问题失败:', followupError)
+          //   // 不向用户显示这个错误，静默处理
+          // }
 
           toast.success('查询执行成功')
         } catch (parseError) {

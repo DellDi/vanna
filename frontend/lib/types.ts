@@ -13,6 +13,12 @@ export interface RewrittenQuestionResponse {
   question: string;
 }
 
+export interface DeleteResponse {
+  type: string;
+  success: boolean;
+  message: string;
+}
+
 // 初始化响应类型
 export interface InitializeResponse extends BaseResponse {
   type: "initialize";

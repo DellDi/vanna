@@ -80,7 +80,19 @@ GET /api/v0/generate_followup_questions?id=<query_id>
 GET /api/v0/generate_rewritten_question?last_question=过去一个月的销售情况&new_question=再显示上个月的
 ```
 
-### 6. 模型训练
+### 6. 删除问题
+
+删除问题记录及相关数据，包括SQL查询、数据结果、图表等。
+
+```python
+# 示例请求
+DELETE /api/v0/delete_question
+{
+  "id": "12345"
+}
+```
+
+### 7. 模型训练
 
 支持添加自定义训练数据，优化模型性能。
 

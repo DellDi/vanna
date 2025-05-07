@@ -20,6 +20,8 @@ from backend.models import (
     TrainRequest,
     UpdateSQLRequest,
     RewrittenQuestionResponse,
+    DeleteQuestionRequest,
+    DeleteResponse,
     # 数据库会话 - 暂时先不用 TODO：所有程序和本地的缓存方案没有问题后，进行数据库层面的迁移
     get_db_session,
 )
@@ -414,8 +416,68 @@ async def generate_followup_questions(
         "type": "question_list",
         "id": id,
         "questions": followup_questions,
-        "header": "Here are some followup questions you can ask:",
+        "header": "Here are some follow-up questions you might be interested in:"
     }
+
+
+@router.delete(
+    "/delete_question",
+    response_model=DeleteResponse,
+    summary="删除问题记录"
+)
+async def delete_question(
+    request: DeleteQuestionRequest,
+    user: Any = Depends(require_auth)
+):
+    """
+    删除问题记录及相关数据
+    
+    根据问题ID删除缓存中的问题及其相关数据，包括SQL查询、数据结果、图表等。
+    如果集成了数据库，还会从数据库中删除相关记录。
+    """
+    try:
+        # 获取要删除的问题ID
+        question_id = request.id
+        
+        if not question_id or not question_id.strip():
+            logger.error("❌ 未提供有效的问题ID")
+            raise HTTPException(status_code=400, detail="未提供有效的问题ID")
+        
+        # 检查问题是否存在
+        question = cache.get(id=question_id, field="question")
+        if not question:
+            logger.warning(f"⚠️ 问题ID {question_id} 不存在")
+            return {
+                "type": "delete",
+                "success": False,
+                "message": f"问题ID {question_id} 不存在或已被删除"
+            }
+        
+        # 删除缓存中的所有相关数据
+        cache_fields = [
+            "question", "sql", "df", "fig_json", "followup_questions", 
+            "summary", "chart_type", "chart_title", "chart_description"
+        ]
+        
+        for field in cache_fields:
+            cache.delete(id=question_id, field=field)
+        
+        # TODO: 如果集成了数据库，还需要从数据库中删除相关记录
+        # 这里将来会使用仓库模式进行数据库操作
+        # with get_db_session() as session:
+        #     question_repo = QuestionRepository(session)
+        #     question_repo.delete(question_id)
+        
+        logger.info(f"🗑️ 成功删除问题ID: {question_id}")
+        
+        return {
+            "type": "delete",
+            "success": True,
+            "message": f"成功删除问题及相关数据"
+        }
+    except Exception as e:
+        logger.error(f"❌ 删除问题失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/load_question", summary="加载已存问题")
