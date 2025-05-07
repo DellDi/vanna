@@ -8,6 +8,11 @@ export interface BaseResponse {
   type: string;
 }
 
+export interface RewrittenQuestionResponse {
+  type: string;
+  question: string;
+}
+
 // 初始化响应类型
 export interface InitializeResponse extends BaseResponse {
   type: "initialize";
@@ -26,6 +31,13 @@ export interface QuestionListResponse extends BaseResponse {
 // SQL生成响应
 export interface GenerateSQLResponse extends BaseResponse {
   type: "sql";
+  id: string;
+  text: string;
+}
+
+// 问题摘要
+export interface TextResponse extends BaseResponse {
+  type: "text";
   id: string;
   text: string;
 }
@@ -82,3 +94,5 @@ export interface Message {
   type: "user" | "assistant";
   content: string;
 }
+
+

@@ -43,6 +43,7 @@ class DataFrameResponse(BaseResponse):
     type: str = Field("df", description="响应类型")
     id: str = Field(..., description="数据ID")
     df: str = Field(..., description="JSON格式的数据框")
+    should_generate_chart: bool = Field(..., description="是否需要生成图表")
 
 
 # Plotly图表响应
@@ -87,6 +88,24 @@ class TrainRequest(BaseModel):
     ddl: Optional[str] = Field(None, description="DDL语句")
     documentation: Optional[str] = Field(None, description="文档内容")
 
+
+class UpdateSQLRequest(BaseModel):
+    """更新SQL查询请求"""
+    id: str = Field(..., description="查询ID")
+    sql: str = Field(..., description="更新后的SQL查询")
+
+
+# 重写问题响应
+class RewrittenQuestionResponse(BaseResponse):
+    """重写问题响应"""
+    type: str = Field("rewritten_question", description="响应类型")
+    question: str = Field(..., description="重写后的问题")
+
+# 配置响应
+class ConfigResponse(BaseResponse):
+    """配置响应"""
+    type: str = Field("config", description="响应类型")
+    config: Dict[str, Any] = Field(..., description="配置信息")
 
 # 错误响应
 class ErrorResponse(BaseResponse):

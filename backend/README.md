@@ -71,7 +71,16 @@ GET /api/v0/generate_questions
 GET /api/v0/generate_followup_questions?id=<query_id>
 ```
 
-### 5. 模型训练
+### 5. 问题重写
+
+根据上一个问题和新问题，生成一个重写后的问题，保持上下文的同时提高问题质量。
+
+```python
+# 示例请求
+GET /api/v0/generate_rewritten_question?last_question=过去一个月的销售情况&new_question=再显示上个月的
+```
+
+### 6. 模型训练
 
 支持添加自定义训练数据，优化模型性能。
 

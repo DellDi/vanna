@@ -11,7 +11,9 @@ import {
   QuestionCacheResponse,
   QuestionHistoryResponse,
   TrainingData,
-  TrainRequest
+  TrainRequest,
+  TextResponse,
+  RewrittenQuestionResponse
 } from './types';
 
 const API_BASE_URL = `${process.env.NEXT_FAST_API_BASE_URL || ''}/api/v0`;
@@ -56,6 +58,35 @@ export async function runSQL(id: string): Promise<DataFrameResponse> {
     throw new Error(`请求失败: ${response.status}`);
   }
   return response.json();
+}
+
+/**
+ * 生成内容摘要
+ */
+export async function generateSummary(id: string): Promise<TextResponse> {
+  const response = await fetch(`${API_BASE_URL}/generate_summary?id=${id}`);
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  return await response.json();
+}
+
+/**
+ * 生成重写后的问题
+ * @param lastQuestion 上一个问题
+ * @param newQuestion 新问题
+ * @returns 重写后的问题响应
+ */
+export async function generateRewrittenQuestion(lastQuestion: string, newQuestion: string): Promise<RewrittenQuestionResponse> {
+  const encodedLastQuestion = encodeURIComponent(lastQuestion);
+  const encodedNewQuestion = encodeURIComponent(newQuestion);
+  const response = await fetch(`${API_BASE_URL}/generate_rewritten_question?last_question=${encodedLastQuestion}&new_question=${encodedNewQuestion}`);
+  
+  if (!response.ok) {
+    throw new Error(`API error: ${response.status}`);
+  }
+  
+  return await response.json();
 }
 
 /**

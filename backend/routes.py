@@ -15,22 +15,54 @@ from backend.models import (
     DataFrameResponse,
     PlotlyFigureResponse,
     TextResponse,
+    ConfigResponse,
     RemoveTrainingDataRequest,
     TrainRequest,
+    UpdateSQLRequest,
+    RewrittenQuestionResponse,
     # 数据库会话 - 暂时先不用 TODO：所有程序和本地的缓存方案没有问题后，进行数据库层面的迁移
     get_db_session,
 )
 
 from main.run import vn
 from backend.cache import MemoryCache
+from backend.auth import require_auth, auth
 from main.run import initialize_training, train_qa_data
 import logging
+import importlib.metadata
 
 # 初始化缓存和路由
 cache = MemoryCache()
 router = APIRouter(prefix="/api/v0", tags=["ChartBI API"])
 
 logger = logging.getLogger("uvicorn")
+
+# 全局配置
+# 默认配置与原始Flask版本保持一致
+config = {
+    # 基础配置
+    "debug": True,
+    "allow_llm_to_see_data": False,
+    "chart": True,
+    # UI配置
+    "logo": "https://poc.new-see.com/M00/00/DB/rBA3xGgJrJyABcs_ABrGg9fghbg128.png",
+    "title": "Welcome to ChartBI API",
+    "subtitle": "Your AI-powered copilot for SQL queries.",
+    # 功能开关
+    "show_training_data": True,
+    "suggested_questions": True,
+    "sql": True,
+    "table": True,
+    "csv_download": True,
+    "redraw_chart": True,
+    "auto_fix_sql": True,
+    "ask_results_correct": True,
+    "followup_questions": True,
+    "summarization": True,
+    "function_generation": hasattr(vn, "get_function"),
+    # 版本信息
+    "version": "0.2.0",
+}
 
 
 # 依赖注入函数
@@ -97,6 +129,66 @@ def require_cache(fields: List[str], optional_fields: List[str] = None):
 # 模型定义已迁移到 backend/models/schemas.py
 
 
+@router.get("/generate_rewritten_question", response_model=RewrittenQuestionResponse, summary="生成重写问题")
+async def generate_rewritten_question(
+    last_question: str = Query(..., description="上一个问题"), 
+    new_question: str = Query(..., description="新问题"),
+    user: Any = Depends(require_auth)
+):
+    """
+    生成重写后的问题
+    
+    根据上一个问题和新问题，生成一个重写后的问题。
+    这样可以在保持上下文的同时，提高问题的质量。
+    """
+    try:
+        # 检查参数
+        if not last_question or not last_question.strip():
+            logger.error("❌ 未提供上一个问题")
+            raise HTTPException(status_code=400, detail="未提供上一个问题")
+            
+        if not new_question or not new_question.strip():
+            logger.error("❌ 未提供新问题")
+            raise HTTPException(status_code=400, detail="未提供新问题")
+        
+        # 生成重写后的问题
+        rewritten_question = vn.generate_rewritten_question(last_question, new_question)
+        logger.info(f"🔄 已生成重写问题: {rewritten_question}")
+        
+        return {
+            "type": "rewritten_question",
+            "question": rewritten_question
+        }
+    except Exception as e:
+        logger.error(f"❌ 生成重写问题失败: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/get_config", response_model=ConfigResponse, summary="获取配置信息")
+async def get_config(user: Any = Depends(require_auth)):
+    """
+    获取用户配置信息
+    
+    返回当前用户的配置信息，包括界面设置和功能开关等。
+    如果用户未登录，将返回401错误。
+    """
+    # 根据用户覆盖配置
+    user_config = auth.override_config_for_user(user, config)
+    
+    # 更新版本信息
+    try:
+        version = importlib.metadata.version('vanna')
+        user_config["version"] = version
+    except importlib.metadata.PackageNotFoundError:
+        # 使用默认版本
+        pass
+    
+    return {
+        "type": "config",
+        "config": user_config
+    }
+
+
 @router.get("/initialize", response_model=InitializeResponse, summary="初始化训练")
 async def initialize():
     initialize_training()
@@ -141,7 +233,7 @@ async def run_sql(data: Dict[str, Any] = require_cache(fields=["sql"])):
     try:
         df = vn.run_sql(sql=sql)
         cache.set(id=id, field="df", value=df)
-        return {"type": "df", "id": id, "df": df.head(10).to_json(orient="records")}
+        return {"type": "df", "id": id, "df": df.head(10).to_json(orient="records"), "should_generate_chart": config["chart"]}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -249,6 +341,36 @@ async def remove_training_data(req: RemoveTrainingDataRequest):
     if vn.remove_training_data(id=req.id):
         return {"success": True}
     raise HTTPException(status_code=400, detail="Couldn't remove training data")
+
+
+@router.post("/update_sql", response_model=GenerateSQLResponse, summary="更新SQL查询")
+async def update_sql(req: UpdateSQLRequest, user: Any = Depends(require_auth)):
+    """
+    更新已存在的SQL查询
+    
+    接收查询ID和新的SQL查询文本，更新缓存中的SQL查询。
+    返回更新后的SQL查询信息。
+    """
+    # 检查缓存中是否存在该ID
+    if req.id not in cache.cache:
+        logger.error(f"❌ 缓存中不存在ID: {req.id}")
+        raise HTTPException(status_code=400, detail=f"缓存中不存在ID: {req.id}")
+    
+    # 检查SQL查询是否为空
+    if not req.sql or not req.sql.strip():
+        logger.error("❌ 未提供SQL查询")
+        raise HTTPException(status_code=400, detail="未提供SQL查询")
+    
+    # 更新缓存中的SQL查询
+    cache.set(id=req.id, field="sql", value=req.sql)
+    logger.info(f"🔄 已更新SQL查询: ID={req.id}")
+    
+    # 返回更新后的SQL查询信息
+    return {
+        "type": "sql",
+        "id": req.id,
+        "text": req.sql
+    }
 
 
 @router.post("/train", summary="添加训练数据")

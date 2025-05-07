@@ -14,6 +14,9 @@ from .schemas import (
     QuestionCacheResponse,
     RemoveTrainingDataRequest,
     TrainRequest,
+    UpdateSQLRequest,
+    RewrittenQuestionResponse,
+    ConfigResponse,
     ErrorResponse
 )
 
@@ -60,6 +63,9 @@ __all__ = [
     'QuestionCacheResponse',
     'RemoveTrainingDataRequest',
     'TrainRequest',
+    'UpdateSQLRequest',
+    'RewrittenQuestionResponse',
+    'ConfigResponse',
     'ErrorResponse',
     
     # 数据库模型
