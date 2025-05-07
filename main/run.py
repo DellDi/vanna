@@ -108,7 +108,7 @@ def train_qa_data(vn: MyVanna = vn):
 
 
 # 导出vn实例供FastAPI使用~
-__all__ = ['vn', 'create_vanna_instance']
+__all__ = ['vn']
 
 # 只有在作为主模块运行时才执行训练初始化
 if __name__ == "__main__":

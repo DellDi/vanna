@@ -3,20 +3,18 @@
 """
 import importlib
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends
 
-from backend.auth import require_auth, auth
-from backend.cache import cache
+from backend.auth import auth, require_auth
 from backend.models import (
     ConfigResponse,
     InitializeResponse,
 )
 
 # 创建路由
-router = APIRouter(tags=["基础"])
+router = APIRouter(tags=["基础信息"])
 
 # 日志配置
 logger = logging.getLogger(__name__)
@@ -52,14 +50,13 @@ async def root():
 async def get_config(user: Any = Depends(require_auth)):
     """
     获取用户配置信息
-    
+
     返回当前用户的配置信息，包括界面设置和功能开关等。
     如果用户未登录，将返回401错误。
     """
     # 根据用户覆盖配置
-    from backend.auth import auth
     user_config = auth.override_config_for_user(user, config)
-    
+
     # 更新版本信息
     try:
         version = importlib.metadata.version('vanna')
@@ -67,7 +64,7 @@ async def get_config(user: Any = Depends(require_auth)):
     except importlib.metadata.PackageNotFoundError:
         # 使用默认版本
         pass
-    
+
     return {
         "type": "config",
         "config": user_config

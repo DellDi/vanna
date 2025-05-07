@@ -127,19 +127,17 @@ def require_cache(fields: List[str], optional_fields: List[str] = None):
 
     return Depends(dependency)
 
-
 # 模型定义已迁移到 backend/models/schemas.py
-
 
 @router.get("/generate_rewritten_question", response_model=RewrittenQuestionResponse, summary="生成重写问题")
 async def generate_rewritten_question(
-    last_question: str = Query(..., description="上一个问题"), 
+    last_question: str = Query(..., description="上一个问题"),
     new_question: str = Query(..., description="新问题"),
     user: Any = Depends(require_auth)
 ):
     """
     生成重写后的问题
-    
+
     根据上一个问题和新问题，生成一个重写后的问题。
     这样可以在保持上下文的同时，提高问题的质量。
     """
@@ -148,15 +146,15 @@ async def generate_rewritten_question(
         if not last_question or not last_question.strip():
             logger.error("❌ 未提供上一个问题")
             raise HTTPException(status_code=400, detail="未提供上一个问题")
-            
+
         if not new_question or not new_question.strip():
             logger.error("❌ 未提供新问题")
             raise HTTPException(status_code=400, detail="未提供新问题")
-        
+
         # 生成重写后的问题
         rewritten_question = vn.generate_rewritten_question(last_question, new_question)
         logger.info(f"🔄 已生成重写问题: {rewritten_question}")
-        
+
         return {
             "type": "rewritten_question",
             "question": rewritten_question
@@ -170,13 +168,13 @@ async def generate_rewritten_question(
 async def get_config(user: Any = Depends(require_auth)):
     """
     获取用户配置信息
-    
+
     返回当前用户的配置信息，包括界面设置和功能开关等。
     如果用户未登录，将返回401错误。
     """
     # 根据用户覆盖配置
     user_config = auth.override_config_for_user(user, config)
-    
+
     # 更新版本信息
     try:
         version = importlib.metadata.version('vanna')
@@ -184,7 +182,7 @@ async def get_config(user: Any = Depends(require_auth)):
     except importlib.metadata.PackageNotFoundError:
         # 使用默认版本
         pass
-    
+
     return {
         "type": "config",
         "config": user_config
@@ -349,7 +347,7 @@ async def remove_training_data(req: RemoveTrainingDataRequest):
 async def update_sql(req: UpdateSQLRequest, user: Any = Depends(require_auth)):
     """
     更新已存在的SQL查询
-    
+
     接收查询ID和新的SQL查询文本，更新缓存中的SQL查询。
     返回更新后的SQL查询信息。
     """
@@ -357,16 +355,16 @@ async def update_sql(req: UpdateSQLRequest, user: Any = Depends(require_auth)):
     if req.id not in cache.cache:
         logger.error(f"❌ 缓存中不存在ID: {req.id}")
         raise HTTPException(status_code=400, detail=f"缓存中不存在ID: {req.id}")
-    
+
     # 检查SQL查询是否为空
     if not req.sql or not req.sql.strip():
         logger.error("❌ 未提供SQL查询")
         raise HTTPException(status_code=400, detail="未提供SQL查询")
-    
+
     # 更新缓存中的SQL查询
     cache.set(id=req.id, field="sql", value=req.sql)
     logger.info(f"🔄 已更新SQL查询: ID={req.id}")
-    
+
     # 返回更新后的SQL查询信息
     return {
         "type": "sql",
@@ -431,18 +429,18 @@ async def delete_question(
 ):
     """
     删除问题记录及相关数据
-    
+
     根据问题ID删除缓存中的问题及其相关数据，包括SQL查询、数据结果、图表等。
     如果集成了数据库，还会从数据库中删除相关记录。
     """
     try:
         # 获取要删除的问题ID
         question_id = request.id
-        
+
         if not question_id or not question_id.strip():
             logger.error("❌ 未提供有效的问题ID")
             raise HTTPException(status_code=400, detail="未提供有效的问题ID")
-        
+
         # 检查问题是否存在
         question = cache.get(id=question_id, field="question")
         if not question:
@@ -452,24 +450,24 @@ async def delete_question(
                 "success": False,
                 "message": f"问题ID {question_id} 不存在或已被删除"
             }
-        
+
         # 删除缓存中的所有相关数据
         cache_fields = [
-            "question", "sql", "df", "fig_json", "followup_questions", 
+            "question", "sql", "df", "fig_json", "followup_questions",
             "summary", "chart_type", "chart_title", "chart_description"
         ]
-        
+
         for field in cache_fields:
             cache.delete(id=question_id, field=field)
-        
+
         # TODO: 如果集成了数据库，还需要从数据库中删除相关记录
         # 这里将来会使用仓库模式进行数据库操作
         # with get_db_session() as session:
         #     question_repo = QuestionRepository(session)
         #     question_repo.delete(question_id)
-        
+
         logger.info(f"🗑️ 成功删除问题ID: {question_id}")
-        
+
         return {
             "type": "delete",
             "success": True,

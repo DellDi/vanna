@@ -17,6 +17,12 @@
 SET NAMES utf8mb4;
 SET FOREIGN_KEY_CHECKS = 0;
 
+-- 创建库ns_dws
+-- 1. 创建数据库(MySQL中没有Schema概念)
+CREATE DATABASE IF NOT EXISTS ns_dws CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+USE ns_dws;
+
 -- ----------------------------
 -- Table structure for dwd_organizations
 -- ----------------------------
