@@ -1,54 +1,65 @@
 /**
  * 侧边栏组件 - 在不同页面中复用
  */
-"use client"
+'use client'
 
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { DellDiLogo } from "@/components/logo"
-import { ThemeToggle } from "@/components/theme-toggle"
-import { MessageSquare, Database, Settings, Plus, ArrowLeft, FileText } from "lucide-react"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
-import { getQuestionHistoryAction } from "@/lib/actions"
-import { toast } from "sonner"
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { DellDiLogo } from '@/components/logo'
+import { ThemeToggle } from '@/components/theme-toggle'
+import {
+  MessageSquare,
+  Database,
+  Settings,
+  Plus,
+  ArrowLeft,
+  FileText,
+} from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { getQuestionHistoryAction } from '@/lib/actions'
+import { toast } from 'sonner'
 
 interface SidebarProps {
-  currentPage: "chat" | "training"
+  currentPage: 'chat' | 'training'
   version?: string
 }
 
-export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
+export function Sidebar({ currentPage, version = 'v1.0.2' }: SidebarProps) {
   const router = useRouter()
-  const [recentQuestions, setRecentQuestions] = useState<Array<{id: string; question: string}>>([])
+  const [recentQuestions, setRecentQuestions] = useState<
+    Array<{ id: string; question: string }>
+  >([])
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchQuestionHistory = async () => {
-      try {
-        setLoading(true)
-        const response = await getQuestionHistoryAction()
-        setRecentQuestions(response.questions || [])
-      } catch (error) {
-        console.error("获取问题历史失败:", error)
-        toast.error("获取问题历史失败")
-      } finally {
-        setLoading(false)
-      }
+  const fetchQuestionHistory = async () => {
+    try {
+      setLoading(true)
+      const response = await getQuestionHistoryAction()
+      setRecentQuestions(response.questions || [])
+    } catch (error) {
+      console.error('获取问题历史失败:', error)
+      toast.error('获取问题历史失败')
+    } finally {
+      setLoading(false)
     }
+  }
 
+  useEffect(() => {
     fetchQuestionHistory()
   }, [])
 
-  const navigateToChat = () => router.push("/")
-  const navigateToTrainingData = () => router.push("/training-data")
+  const navigateToChat = () => router.push('/')
+  const navigateToTrainingData = () => router.push('/training-data')
 
   // 新建对话功能
   const handleNewConversation = () => {
     // 清除当前对话，跳转到主页
-    router.replace("/")
+    router.replace('/')
     // 通知主页面清除当前对话状态
-    window.dispatchEvent(new CustomEvent("new-conversation"))
+    window.dispatchEvent(new CustomEvent('new-conversation'))
+    // 并且调用查询历史对话
+    fetchQuestionHistory()
   }
 
   const handleQuestionClick = (id: string) => {
@@ -72,7 +83,7 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
             连接
           </Button>
           <Button
-            variant={currentPage === "training" ? "secondary" : "outline"}
+            variant={currentPage === 'training' ? 'secondary' : 'outline'}
             size="sm"
             className="flex-1"
             onClick={navigateToTrainingData}
@@ -85,7 +96,7 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
 
       {/* 主要操作按钮 */}
       <div className="p-4">
-        {currentPage === "chat" ? (
+        {currentPage === 'chat' ? (
           <Button
             className="w-full justify-start gap-2"
             variant="default"
@@ -95,7 +106,11 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
             新建对话
           </Button>
         ) : (
-          <Button className="w-full justify-start gap-2" variant="default" onClick={navigateToChat}>
+          <Button
+            className="w-full justify-start gap-2"
+            variant="default"
+            onClick={navigateToChat}
+          >
             <ArrowLeft size={16} />
             返回聊天
           </Button>
@@ -105,30 +120,44 @@ export function Sidebar({ currentPage, version = "v1.0.2" }: SidebarProps) {
       {/* 最近问题标题 */}
       <div className="px-4 py-2">
         <h3 className="text-sm font-medium text-muted-foreground mb-2">
-          {currentPage === "chat" ? "最近对话" : "最近问题"}
+          {currentPage === 'chat' ? '最近对话' : '最近问题'}
         </h3>
       </div>
 
       {/* 最近问题列表 */}
       <div className="overflow-y-auto flex-1 px-2">
         {loading ? (
-          <div className="text-center py-4 text-sm text-muted-foreground">加载中...</div>
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            加载中...
+          </div>
         ) : recentQuestions.length === 0 ? (
-          <div className="text-center py-4 text-sm text-muted-foreground">暂无历史记录</div>
+          <div className="text-center py-4 text-sm text-muted-foreground">
+            暂无历史记录
+          </div>
         ) : (
           <div className="space-y-1">
             {recentQuestions.map((item, index) => (
               <Button
                 key={item.id}
-                variant={index === 1 ? "secondary" : "ghost"}
+                variant={index === 1 ? 'secondary' : 'ghost'}
                 className="w-full justify-start text-left font-normal h-auto py-2"
                 onClick={() => handleQuestionClick(item.id)}
               >
                 <div className="flex items-center gap-2 w-full">
-                  {currentPage === "chat" ? (
-                    <MessageSquare size={14} className={index === 1 ? "" : "shrink-0 text-muted-foreground"} />
+                  {currentPage === 'chat' ? (
+                    <MessageSquare
+                      size={14}
+                      className={
+                        index === 1 ? '' : 'shrink-0 text-muted-foreground'
+                      }
+                    />
                   ) : (
-                    <FileText size={14} className={index === 1 ? "" : "shrink-0 text-muted-foreground"} />
+                    <FileText
+                      size={14}
+                      className={
+                        index === 1 ? '' : 'shrink-0 text-muted-foreground'
+                      }
+                    />
                   )}
                   <span className="truncate">{item.question}</span>
                 </div>

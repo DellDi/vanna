@@ -2,7 +2,7 @@
 拓展能力相关路由模块 - 包含数据摘要、问题重写等拓展功能
 """
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 
@@ -55,31 +55,56 @@ async def download_csv(data: Dict[str, Any] = require_cache(fields=["df"])):
     "/generate_plotly_figure", response_model=PlotlyFigureResponse, summary="生成图表"
 )
 async def generate_plotly_figure(
-    data: Dict[str, Any] = require_cache(fields=["df", "question", "sql"])
+    chart_instructions: Optional[str] = Query(None, description="图表生成特殊指令"),
+    data: Dict[str, Any] = require_cache(fields=["df", "question", "sql"]),
+    user: Any = Depends(require_auth)
 ):
     """
     生成Plotly可视化图表
 
     根据查询结果生成适合的Plotly可视化图表。
+    可以通过chart_instructions参数提供特殊的图表生成指令。
     """
     try:
         id = data["id"]
         df = data["df"]
         question = data["question"]
         sql = data["sql"]
+        
+        logger.info(f"✅ 开始生成图表, ID: {id}, 指令: {chart_instructions if chart_instructions else '无'}")
+
+        # 如果没有chart_instructions，尝试从缓存获取plotly代码
+        if chart_instructions is None or len(chart_instructions.strip()) == 0:
+            code = cache.get(id=id, field="plotly_code")
+            logger.info(f"✅ 从缓存获取plotly代码: {'成功' if code else '失败'}")
+        else:
+            # 如果有chart_instructions，生成新的plotly代码
+            enhanced_question = f"{question}. When generating the chart, use these special instructions: {chart_instructions}"
+            code = vn.generate_plotly_code(
+                question=enhanced_question,
+                sql=sql,
+                df=df,
+                chart_instructions=chart_instructions
+            )
+            # 缓存plotly代码
+            cache.set(id=id, field="plotly_code", value=code)
+            logger.info(f"✅ 生成并缓存了新的plotly代码")
 
         # 生成图表
-        fig = vn.get_plotly_figure(question=question, sql=sql, df=df)
+        fig = vn.get_plotly_figure(plotly_code=code, df=df, dark_mode=False)
         fig_json = fig.to_json()
 
-        # 缓存图表
+        # 缓存图表JSON
         cache.set(id=id, field="fig_json", value=fig_json)
 
-        logger.info(f"✅ 已生成图表, ID: {id}")
+        logger.info(f"✅ 已生成图表并缓存, ID: {id}")
 
         return {"type": "plotly_figure", "id": id, "fig": fig_json}
     except Exception as e:
+        # 打印堆栈跟踪
+        import traceback
         logger.error(f"❌ 生成图表失败: {str(e)}")
+        logger.error(traceback.format_exc())
         raise HTTPException(status_code=500, detail=str(e))
 
 

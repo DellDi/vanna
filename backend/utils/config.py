@@ -1,0 +1,21 @@
+# 全局配置
+config = {
+    "allow_llm_to_see_data": True,
+    "ask_results_correct": True,
+    "auto_fix_sql": True,
+    "chart": True,
+    "csv_download": True,
+    "debug": True,
+    "followup_questions": True,
+    "function_generation": False,
+    "logo": "https://img.vanna.ai/vanna-flask.svg",
+    "redraw_chart": True,
+    "show_training_data": True,
+    "sql": True,
+    "subtitle": "Your AI-powered copilot for SQL queries.",
+    "suggested_questions": True,
+    "summarization": True,
+    "table": True,
+    "title": "Welcome to ChartBI API",
+    "version": "0.2.2",
+}

@@ -53,6 +53,7 @@ export interface DataFrameResponse extends BaseResponse {
   type: "df";
   id: string;
   df: string; // JSON格式的数据框
+  should_generate_chart?: boolean; // 是否应该自动生成图表
 }
 
 // Plotly图表响应

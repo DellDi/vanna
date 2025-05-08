@@ -196,20 +196,6 @@ async def initialize():
     return {"type": "initialize", "message": "初始化完成"}
 
 
-# 路由定义
-@router.get(
-    "/generate_questions", response_model=QuestionListResponse, summary="生成问题列表"
-)
-async def generate_questions():
-    """
-    生成一系列可以提问的自然语言问题
-    """
-    return {
-        "type": "question_list",
-        "questions": vn.generate_questions(),
-        "header": "Here are some questions you can ask:",
-    }
-
 
 @router.get("/generate_sql", response_model=GenerateSQLResponse, summary="生成SQL查询")
 async def generate_sql(question: str = Query(..., description="自然语言问题")):

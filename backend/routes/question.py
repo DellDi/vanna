@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from backend.models.schemas import TextResponse
 from main.run import vn
 
+from backend.utils.config import config
 from backend.auth import require_auth
 from backend.cache import cache
 from backend.utils.cache_utils import require_cache
@@ -30,37 +31,27 @@ router = APIRouter(tags=["提问核心"])
 logger = logging.getLogger(__name__)
 
 
-@router.post("/generate_sql", response_model=GenerateSQLResponse, summary="生成SQL")
-async def generate_sql(
-    question: str = Query(..., description="用户问题"),
-    user: Any = Depends(require_auth),
-):
+@router.get("/get_question_history", summary="获取问题历史")
+async def get_question_history():
+    """
+    获取历史问题列表
+    """
+    return {
+        "type": "question_history",
+        "questions": cache.get_all(field_list=["question"]),
+    }
+
+
+@router.get("/generate_sql", response_model=GenerateSQLResponse, summary="生成SQL查询")
+async def generate_sql(question: str = Query(..., description="自然语言问题")):
     """
     根据自然语言问题生成SQL查询
-
-    接收用户的自然语言问题，使用大语言模型生成对应的SQL查询语句。
     """
-    try:
-        if not question or not question.strip():
-            logger.error("❌ 未提供有效问题")
-            raise HTTPException(status_code=400, detail="未提供有效问题")
-
-        # 生成唯一ID
-        id = cache.generate_id()
-
-        # 生成SQL
-        sql = vn.generate_sql(question)
-
-        # 缓存问题和SQL
-        cache.set(id=id, field="question", value=question)
-        cache.set(id=id, field="sql", value=sql)
-
-        logger.info(f"✅ 已为问题生成SQL, ID: {id}")
-
-        return {"type": "sql", "id": id, "question": question, "sql": sql}
-    except Exception as e:
-        logger.error(f"❌ 生成SQL失败: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
+    id = cache.generate_id(question=question)
+    sql = vn.generate_sql(question=question)
+    cache.set(id=id, field="question", value=question)
+    cache.set(id=id, field="sql", value=sql)
+    return {"type": "sql", "id": id, "text": sql}
 
 
 @router.post("/update_sql", response_model=GenerateSQLResponse, summary="更新SQL")
@@ -99,33 +90,23 @@ async def update_sql(request: UpdateSQLRequest, user: Any = Depends(require_auth
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/run_sql", response_model=DataFrameResponse, summary="执行SQL")
+@router.get("/run_sql", response_model=DataFrameResponse, summary="执行SQL查询")
 async def run_sql(data: Dict[str, Any] = require_cache(fields=["sql"])):
     """
-    执行SQL查询并返回结果
-
-    执行缓存中的SQL查询，返回查询结果数据框。
+    执行生成的SQL查询并返回结果
     """
+    id = data["id"]
+    sql = data["sql"]
     try:
-        id = data["id"]
-        sql = data["sql"]
-
-        # 执行SQL
-        df = vn.run_sql(sql)
-
-        # 缓存结果
+        df = vn.run_sql(sql=sql)
         cache.set(id=id, field="df", value=df)
-
-        logger.info(f"✅ 已执行SQL, ID: {id}, 结果行数: {len(df)}")
-
         return {
-            "type": "dataframe",
+            "type": "df",
             "id": id,
             "df": df.head(10).to_json(orient="records"),
-            "should_generate_chart": True,
+            "should_generate_chart": config["chart"],
         }
     except Exception as e:
-        logger.error(f"❌ 执行SQL失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -133,15 +114,73 @@ async def run_sql(data: Dict[str, Any] = require_cache(fields=["sql"])):
 @router.get(
     "/generate_questions", response_model=QuestionListResponse, summary="生成问题列表"
 )
-async def generate_questions():
+async def generate_questions(user: Any = Depends(require_auth)):
     """
     生成一系列可以提问的自然语言问题
+    
+    根据训练数据或预定义模型生成可以提问的问题列表。
+    如果是chinook模型，返回预定义问题；否则从训练数据中随机抽取问题。
     """
-    return {
-        "type": "question_list",
-        "questions": vn.generate_questions(),
-        "header": "Here are some questions you can ask:",
-    }
+    # 特殊情况处理：如果模型是"chinook"，返回预定义问题
+    if hasattr(vn, "_model") and vn._model == "chinook":
+        return {
+            "type": "question_list",
+            "questions": [
+                "What are the top 10 artists by sales?",
+                "What are the total sales per year by country?",
+                "Who is the top selling artist in each genre? Show the sales numbers.",
+                "How do the employees rank in terms of sales performance?",
+                "Which 5 cities have the most customers?",
+            ],
+            "header": "Here are some questions you can ask:",
+        }
+    
+    try:
+        # 获取训练数据
+        training_data = vn.get_training_data()
+        logger.info(f"✅ 获取到训练数据: {len(training_data)}行")
+        
+        # 如果训练数据为空，返回错误
+        if training_data is None or len(training_data) == 0:
+            logger.warning("⚠️ 未找到训练数据")
+            return {
+                "type": "error",
+                "error": "No training data found. Please add some training data first.",
+            }
+        
+        # 从训练数据中筛选出有问题的数据
+        valid_questions = training_data[training_data["question"].notnull()]
+        logger.info(f"✅ 筛选出有效问题: {len(valid_questions)}个")
+        
+        # 如果有效问题少于5个，则全部使用；否则随机抽取5个
+        if len(valid_questions) <= 5:
+            questions = valid_questions["question"].tolist()
+            logger.info(f"✅ 有效问题少于5个，使用全部{len(questions)}个问题")
+        else:
+            questions = valid_questions.sample(5)["question"].tolist()
+            logger.info(f"✅ 随机抽取5个问题")
+            
+        # 如果没有有效问题，返回空列表
+        if len(questions) == 0:
+            logger.warning("⚠️ 未找到有效问题")
+            return {
+                "type": "question_list",
+                "questions": [],
+                "header": "Go ahead and ask a question",
+            }
+        
+        return {
+            "type": "question_list",
+            "questions": questions,
+            "header": "Here are some questions you can ask",
+        }
+    except Exception as e:
+        logger.error(f"❌ 生成问题列表失败: {str(e)}")
+        return {
+            "type": "question_list",
+            "questions": [],
+            "header": "Go ahead and ask a question",
+        }
 
 
 @router.get(

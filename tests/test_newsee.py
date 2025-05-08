@@ -79,5 +79,5 @@ for item in sql_qa_data:
 
 from vanna.flask import VannaFlaskApp
 
-app = VannaFlaskApp(vn, allow_llm_to_see_data=True)
+app = VannaFlaskApp(vn, allow_llm_to_see_data=True, chart=True)
 app.run()

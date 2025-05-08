@@ -222,13 +222,14 @@ export default function ChatInterface() {
             },
           ])
 
-          // 尝试生成可视化
-          try {
-            const figResponse = await generatePlotlyFigureAction(currentId)
-            // 这里可以添加显示图表的逻辑
-          } catch (figError) {
-            console.error('生成可视化失败:', figError)
-            // 不阻止主流程
+          // 如果配置中允许自动生成图表，则自动生成
+          if (dfResponse.should_generate_chart) {
+            try {
+              await handleGenerateChart(currentId)
+            } catch (figError) {
+              console.error('生成可视化失败:', figError)
+              // 不阻止主流程
+            }
           }
 
           // 尝试生成后续问题，但不阻止主流程
@@ -261,6 +262,81 @@ export default function ChatInterface() {
           content: '执行查询失败，请检查SQL语句或稍后再试。',
         },
       ])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 生成图表
+  const handleGenerateChart = async (id: string) => {
+    if (!id) {
+      toast.error('无效的查询ID')
+      return
+    }
+
+    try {
+      setLoading(true)
+      // 生成图表
+      const figResponse = await generatePlotlyFigureAction(id)
+      
+      if (figResponse && figResponse.fig) {
+        // 将图表添加到消息中
+        setMessages((prev) => [
+          ...prev,
+          {
+            type: 'assistant',
+            content: `plotly_chart:\n${figResponse.fig}`,
+          },
+        ])
+        toast.success('图表生成成功')
+      }
+    } catch (error) {
+      console.error('生成图表失败:', error)
+      toast.error('生成图表失败')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // 导出数据
+  const handleExportData = async (id: string) => {
+    if (!id || !currentId) {
+      toast.error('无效的查询ID')
+      return
+    }
+
+    try {
+      // 导出数据为CSV
+      window.open(`/api/v0/download_csv?id=${currentId}`, '_blank')
+      toast.success('数据导出成功')
+    } catch (error) {
+      console.error('导出数据失败:', error)
+      toast.error('导出数据失败')
+    }
+  }
+
+  // 重新生成SQL
+  const handleRegenerateSQL = async (id: string) => {
+    if (!id) {
+      toast.error('无效的查询ID')
+      return
+    }
+
+    try {
+      setLoading(true)
+      // 这里应该调用重新生成SQL的API
+      // 暂时使用原有的生成SQL逻辑
+      // 获取最后一个用户消息
+      const userMessages = messages.filter(m => m.type === 'user')
+      if (userMessages.length > 0) {
+        const lastUserMessage = userMessages[userMessages.length - 1].content
+        await handleSendMessage(lastUserMessage)
+      } else {
+        toast.error('无法找到原始问题')
+      }
+    } catch (error) {
+      console.error('重新生成SQL失败:', error)
+      toast.error('重新生成SQL失败')
     } finally {
       setLoading(false)
     }
@@ -339,7 +415,13 @@ export default function ChatInterface() {
         )}
 
         {/* 消息列表 */}
-        <MessageList messages={messages} onRunQuery={handleRunQuery} />
+        <MessageList 
+          messages={messages} 
+          onRunQuery={handleRunQuery}
+          onGenerateChart={handleGenerateChart}
+          onExportData={handleExportData}
+          onRegenerateSQL={handleRegenerateSQL}
+        />
 
         {/* 消息输入框 */}
         <MessageInput onSendMessage={handleSendMessage} disabled={loading} />
