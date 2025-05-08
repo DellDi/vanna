@@ -1,15 +1,23 @@
 /**
  * 消息列表组件 - 显示聊天界面中的消息
  */
-"use client"
+'use client'
 
-import { Message } from "@/lib/types"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { useState } from "react"
-import { toast } from "sonner"
-import { Download, Copy, Play, BarChart4, RefreshCw, FileSpreadsheet } from "lucide-react"
+import { Message } from '@/lib/types'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { useState } from 'react'
+import { toast } from 'sonner'
+import {
+  Download,
+  Copy,
+  Play,
+  BarChart4,
+  RefreshCw,
+  FileSpreadsheet,
+  MessageSquare,
+} from 'lucide-react'
 
 interface MessageListProps {
   messages: Message[]
@@ -17,28 +25,32 @@ interface MessageListProps {
   onGenerateChart?: (id: string) => void
   onExportData?: (id: string) => void
   onRegenerateSQL?: (id: string) => void
+  onGenerateFollowup?: (id: string) => void
 }
 
 // 消息类型定义
 // 用于识别消息的内容类型，以便显示不同的操作按钮
- enum MessageContentType {
-  WELCOME = 'welcome',        // 欢迎消息
-  SQL = 'sql',               // SQL查询
-  QUERY_RESULT = 'result',    // 查询结果
-  CHART = 'chart',           // 图表
-  ERROR = 'error',           // 错误消息
-  UNKNOWN = 'unknown'        // 未知类型
+enum MessageContentType {
+  WELCOME = 'welcome', // 欢迎消息
+  SQL = 'sql', // SQL查询
+  QUERY_RESULT = 'result', // 查询结果
+  CHART = 'chart', // 图表
+  ERROR = 'error', // 错误消息
+  UNKNOWN = 'unknown', // 未知类型
 }
 
-export function MessageList({ 
-  messages, 
-  onRunQuery, 
-  onGenerateChart, 
+export function MessageList({
+  messages,
+  onRunQuery,
+  onGenerateChart,
   onExportData,
-  onRegenerateSQL 
+  onRegenerateSQL,
+  onGenerateFollowup,
 }: MessageListProps) {
   // 使用更精确的类型定义，支持字符串索引
-  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>({})
+  const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
+    {}
+  )
   const [results, setResults] = useState<Record<string, any>>({})
 
   // 复制内容到剪贴板
@@ -51,17 +63,17 @@ export function MessageList({
   const handleRunQuery = async (content: string, index: number) => {
     const indexKey = index.toString()
     try {
-      setLoadingStates(prev => ({ ...prev, [indexKey]: true }))
-      
+      setLoadingStates((prev) => ({ ...prev, [indexKey]: true }))
+
       if (onRunQuery) {
         onRunQuery(content)
       } else {
-        toast.success("查询已执行")
+        toast.success('查询已执行')
       }
     } catch (error) {
-      toast.error("执行查询失败")
+      toast.error('执行查询失败')
     } finally {
-      setLoadingStates(prev => ({ ...prev, [indexKey]: false }))
+      setLoadingStates((prev) => ({ ...prev, [indexKey]: false }))
     }
   }
 
@@ -69,14 +81,14 @@ export function MessageList({
   const handleGenerateChart = (id: string, index: number) => {
     const chartKey = `chart_${index}`
     if (onGenerateChart) {
-      setLoadingStates(prev => ({ ...prev, [chartKey]: true }))
+      setLoadingStates((prev) => ({ ...prev, [chartKey]: true }))
       try {
         onGenerateChart(id)
-        toast.success("正在生成图表...")
+        toast.success('正在生成图表...')
       } catch (error) {
-        toast.error("生成图表失败")
+        toast.error('生成图表失败')
       } finally {
-        setLoadingStates(prev => ({ ...prev, [chartKey]: false }))
+        setLoadingStates((prev) => ({ ...prev, [chartKey]: false }))
       }
     }
   }
@@ -85,7 +97,7 @@ export function MessageList({
   const handleExportData = (id: string) => {
     if (onExportData) {
       onExportData(id)
-      toast.success("正在准备导出数据...")
+      toast.success('正在准备导出数据...')
     }
   }
 
@@ -93,88 +105,108 @@ export function MessageList({
   const handleRegenerateSQL = (id: string, index: number) => {
     const regenKey = `regen_${index}`
     if (onRegenerateSQL) {
-      setLoadingStates(prev => ({ ...prev, [regenKey]: true }))
+      setLoadingStates((prev) => ({ ...prev, [regenKey]: true }))
       try {
         onRegenerateSQL(id)
-        toast.success("正在重新生成SQL...")
+        toast.success('正在重新生成SQL...')
       } catch (error) {
-        toast.error("重新生成SQL失败")
+        toast.error('重新生成SQL失败')
       } finally {
-        setLoadingStates(prev => ({ ...prev, [regenKey]: false }))
+        setLoadingStates((prev) => ({ ...prev, [regenKey]: false }))
       }
     }
   }
 
   // 识别消息内容类型
-  const identifyContentType = (message: Message, index: number): MessageContentType => {
+  const identifyContentType = (
+    message: Message,
+    index: number
+  ): MessageContentType => {
     if (message.type === 'user') {
       return MessageContentType.UNKNOWN
     }
-    
+
     const content = message.content || ''
-    
+
     // 欢迎消息
     if (content.includes('您好') && content.includes('SQL查询助手')) {
       return MessageContentType.WELCOME
     }
-    
+
     // 错误消息
-    if (content.includes('抱歉') || content.includes('失败') || content.includes('错误')) {
+    if (
+      content.includes('抱歉') ||
+      content.includes('失败') ||
+      content.includes('错误')
+    ) {
       return MessageContentType.ERROR
     }
-    
+
     // 查询结果
     if (content.includes('查询结果:')) {
       return MessageContentType.QUERY_RESULT
     }
-    
+
     // 图表结果 - 如果有图表数据
     if (content.includes('plotly') || content.includes('chart')) {
       return MessageContentType.CHART
     }
-    
+
     // 默认假设是SQL查询 - 检查是否含有SQL关键字
-    if (content.includes('SELECT') || content.includes('FROM') || 
-        content.includes('WHERE') || content.includes('GROUP BY') ||
-        content.includes('ORDER BY') || content.includes('JOIN')) {
+    if (
+      content.includes('SELECT') ||
+      content.includes('FROM') ||
+      content.includes('WHERE') ||
+      content.includes('GROUP BY') ||
+      content.includes('ORDER BY') ||
+      content.includes('JOIN')
+    ) {
       return MessageContentType.SQL
     }
-    
+
     return MessageContentType.UNKNOWN
   }
 
   // 根据消息类型渲染操作按钮
   const renderActionButtons = (message: Message, index: number) => {
     const contentType = identifyContentType(message, index)
-    
+
     // 所有消息都有复制按钮，除了欢迎消息
-    const copyButton = contentType !== MessageContentType.WELCOME ? (
-      <Button 
-        variant="outline" 
-        className="gap-1"
-        onClick={() => handleCopy(message.content, contentType === MessageContentType.SQL ? 'SQL' : '内容')}
-      >
-        <Copy className="h-4 w-4" />
-        <span>复制{contentType === MessageContentType.SQL ? ' SQL' : ''}</span>
-      </Button>
-    ) : null
-    
+    const copyButton =
+      contentType !== MessageContentType.WELCOME ? (
+        <Button
+          variant="outline"
+          className="gap-1"
+          onClick={() =>
+            handleCopy(
+              message.content,
+              contentType === MessageContentType.SQL ? 'SQL' : '内容'
+            )
+          }
+        >
+          <Copy className="h-4 w-4" />
+          <span>
+            复制{contentType === MessageContentType.SQL ? ' SQL' : ''}
+          </span>
+        </Button>
+      ) : null
+
     // 根据消息类型渲染不同的按钮组
     switch (contentType) {
       case MessageContentType.SQL:
-        const indexKey = index.toString();
-        const regenKey = `regen_${index}`;
+        const indexKey = index.toString()
+        const regenKey = `regen_${index}`
         return (
           <div className="flex flex-col sm:flex-row gap-3">
             {copyButton}
-            <Button 
-              variant="default" 
+            <Button
+              variant="default"
               className="gap-1"
               onClick={() => handleRunQuery(message.content, index)}
               disabled={loadingStates[indexKey]}
             >
               <Play className="h-4 w-4" />
-              <span>{loadingStates[indexKey] ? "执行中..." : "执行查询"}</span>
+              <span>{loadingStates[indexKey] ? '执行中...' : '执行查询'}</span>
             </Button>
             <Button
               variant="outline"
@@ -183,42 +215,52 @@ export function MessageList({
               disabled={loadingStates[regenKey]}
             >
               <RefreshCw className="h-4 w-4" />
-              <span>{loadingStates[regenKey] ? "重新生成中..." : "重新生成"}</span>
+              <span>
+                {loadingStates[regenKey] ? '重新生成中...' : '重新生成'}
+              </span>
             </Button>
           </div>
         )
-      
+
       case MessageContentType.QUERY_RESULT:
-        const chartKey = `chart_${index}`;
+        const chartKey = `chart_${index}`
         return (
           <div className="flex flex-col sm:flex-row gap-3">
             {copyButton}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="gap-1"
               onClick={() => handleGenerateChart(message.content, index)}
               disabled={loadingStates[chartKey]}
             >
               <BarChart4 className="h-4 w-4" />
-              <span>{loadingStates[chartKey] ? "生成中..." : "生成图表"}</span>
+              <span>{loadingStates[chartKey] ? '生成中...' : '生成图表'}</span>
             </Button>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="gap-1"
               onClick={() => handleExportData(message.content)}
             >
               <FileSpreadsheet className="h-4 w-4" />
               <span>导出数据</span>
             </Button>
+            <Button
+              variant="outline"
+              className="gap-1"
+              onClick={() => onGenerateFollowup && onGenerateFollowup(id)}
+            >
+              <MessageSquare className="h-4 w-4" />
+              <span>更多问题建议</span>
+            </Button>
           </div>
         )
-      
+
       case MessageContentType.CHART:
         return (
           <div className="flex flex-col sm:flex-row gap-3">
             {copyButton}
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="gap-1"
               onClick={() => handleExportData(message.content)}
             >
@@ -227,15 +269,19 @@ export function MessageList({
             </Button>
           </div>
         )
-      
+
       case MessageContentType.ERROR:
-        return copyButton ? <div className="flex flex-col sm:flex-row gap-3">{copyButton}</div> : null
-      
+        return copyButton ? (
+          <div className="flex flex-col sm:flex-row gap-3">{copyButton}</div>
+        ) : null
+
       case MessageContentType.WELCOME:
         return null
-      
+
       default:
-        return copyButton ? <div className="flex flex-col sm:flex-row gap-3">{copyButton}</div> : null
+        return copyButton ? (
+          <div className="flex flex-col sm:flex-row gap-3">{copyButton}</div>
+        ) : null
     }
   }
 
@@ -243,7 +289,7 @@ export function MessageList({
     <div className="flex-1 overflow-y-auto px-6 pb-6 space-y-8">
       {messages.map((message, index) => (
         <div key={index} className="animate-slideIn">
-          {message.type === "user" && (
+          {message.type === 'user' && (
             <div className="flex items-start gap-4 max-w-4xl mx-auto">
               <Avatar className="h-10 w-10 border">
                 <AvatarFallback>U</AvatarFallback>
@@ -251,14 +297,16 @@ export function MessageList({
               <div className="flex-1 space-y-2">
                 <div className="flex items-center">
                   <span className="font-medium">你</span>
-                  <span className="text-xs text-muted-foreground ml-2">刚刚</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    刚刚
+                  </span>
                 </div>
                 <p className="text-foreground">{message.content}</p>
               </div>
             </div>
           )}
 
-          {message.type === "assistant" && (
+          {message.type === 'assistant' && (
             <div className="flex items-start gap-4 max-w-4xl mx-auto mt-6">
               <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
                 <AvatarFallback>DI</AvatarFallback>
@@ -266,7 +314,9 @@ export function MessageList({
               <div className="flex-1 space-y-4">
                 <div className="flex items-center">
                   <span className="font-medium">DellDi</span>
-                  <span className="text-xs text-muted-foreground ml-2">刚刚</span>
+                  <span className="text-xs text-muted-foreground ml-2">
+                    刚刚
+                  </span>
                 </div>
 
                 <Card className="overflow-hidden border border-muted">

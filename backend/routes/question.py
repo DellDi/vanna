@@ -213,6 +213,7 @@ async def generate_followup_questions(
 
         return {
             "type": "text",
+            "id": id,  # 添加id字段，修复响应验证错误
             "text": "\n".join([f"- {q}" for q in followup_questions]),
         }
     except Exception as e:

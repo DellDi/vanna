@@ -194,6 +194,32 @@ export default function ChatInterface() {
     }
   }
 
+  // 生成后续问题
+  const handleGenerateFollowup = async (id: string) => {
+    if (!id) {
+      toast.error('无效的查询ID')
+      return
+    }
+
+    try {
+      setLoading(true)
+      // 生成后续问题
+      const response = await generateFollowupQuestionsAction(id)
+      if (response && response.questions && Array.isArray(response.questions)) {
+        setFollowupQuestions(response.questions)
+      } else {
+        // 如果返回的数据结构不符合预期，设置为空数组
+        setFollowupQuestions([])
+      }
+    } catch (error) {
+      console.error('生成后续问题失败:', error)
+      // 出错时设置为空数组，避免显示之前的后续问题
+      setFollowupQuestions([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
   // 执行SQL查询
   const handleRunQuery = async (id: string) => {
     if (!currentId) {
@@ -233,12 +259,12 @@ export default function ChatInterface() {
           }
 
           // 尝试生成后续问题，但不阻止主流程
-          // try {
-          //   await generateFollowupQuestions(currentId)
-          // } catch (followupError) {
-          //   console.error('生成后续问题失败:', followupError)
-          //   // 不向用户显示这个错误，静默处理
-          // }
+          try {
+            await handleGenerateFollowup(currentId)
+          } catch (followupError) {
+            console.error('生成后续问题失败:', followupError)
+            // 不向用户显示这个错误，静默处理
+          }
 
           toast.success('查询执行成功')
         } catch (parseError) {
@@ -421,6 +447,7 @@ export default function ChatInterface() {
           onGenerateChart={handleGenerateChart}
           onExportData={handleExportData}
           onRegenerateSQL={handleRegenerateSQL}
+          onGenerateFollowup={handleGenerateFollowup}
         />
 
         {/* 消息输入框 */}
