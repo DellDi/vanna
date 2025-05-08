@@ -6,6 +6,11 @@ from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
+from contextlib import asynccontextmanager
+
+from main.run import vn, initialize_training, train_qa_data
+# 设置环境变量，避免 tokenizers 并行处理警告
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 # 设置导入路径
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -22,6 +27,16 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 在应用启动时执行
+    initialize_training(vn)
+    train_qa_data(vn)
+    yield
+    # 在应用关闭时执行
+    # 这里可以放置清理代码
+
+
 # 创建API应用
 app = FastAPI(
     title="ChartBI API",
@@ -35,6 +50,7 @@ app = FastAPI(
     redoc_url="/redoc",
     openapi_url="/openapi.json",
     openapi_version="3.1.0",
+    lifespan=lifespan,
 )
 
 # 添加CORS中间件
@@ -76,4 +92,4 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=int(os.getenv("PORT", 8000)),
         reload=True,
-    )
+        )

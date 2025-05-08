@@ -70,9 +70,11 @@ async def generate_plotly_figure(
         df = data["df"]
         question = data["question"]
         sql = data["sql"]
-        
-        logger.info(f"✅ 开始生成图表, ID: {id}, 指令: {chart_instructions if chart_instructions else '无'}")
 
+        logger.info(f"✅ 开始生成图表, ID: {id}, 指令: {chart_instructions if chart_instructions else '无'}")
+        logger.info(f"✅ 开始生成图表, df: {df}")
+        logger.info(f"✅ 开始生成图表, question: {question}")
+        logger.info(f"✅ 开始生成图表, sql: {sql}")
         # 如果没有chart_instructions，尝试从缓存获取plotly代码
         if chart_instructions is None or len(chart_instructions.strip()) == 0:
             code = cache.get(id=id, field="plotly_code")

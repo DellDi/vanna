@@ -247,7 +247,9 @@ export function MessageList({
             <Button
               variant="outline"
               className="gap-1"
-              onClick={() => onGenerateFollowup && onGenerateFollowup(id)}
+              onClick={() =>
+                onGenerateFollowup && onGenerateFollowup(message.content)
+              }
             >
               <MessageSquare className="h-4 w-4" />
               <span>更多问题建议</span>

@@ -9,7 +9,6 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { MessageList } from '@/components/chat/message-list'
 import { MessageInput } from '@/components/chat/message-input'
 import {
-  initializeAction,
   generateSQLAction,
   runSQLAction,
   generatePlotlyFigureAction,
@@ -90,18 +89,13 @@ export default function ChatInterface() {
     }
   }, [])
 
+
   // 如果URL中有问题ID，则加载该问题
   useEffect(() => {
     if (questionId) {
       loadQuestion(questionId)
     } else if (messages.length === 0) {
       // 首次加载时初始化系统
-      // const initialize = async () => {
-      //   try {
-      //     // 调用初始化接口
-      //     await initializeAction()
-
-      //     // 首次加载显示欢迎消息
       setMessages([
         {
           type: 'assistant',
@@ -109,16 +103,7 @@ export default function ChatInterface() {
             '您好，我是DellDi，您的SQL查询助手。请问有什么可以帮助您的？',
         },
       ])
-
-      // 获取示例问题
       fetchExampleQuestions()
-      //   } catch (error) {
-      //     console.error('初始化失败:', error)
-      //     toast.error('系统初始化失败，请刷新页面重试')
-      //   }
-      // }
-
-      // initialize()
     }
   }, [questionId, messages.length])
 
@@ -181,7 +166,7 @@ export default function ChatInterface() {
       ])
       setCurrentId(response.id)
 
-     
+
     } catch (error) {
       console.error('生成SQL查询失败:', error)
       toast.error('生成SQL查询失败')
@@ -304,7 +289,7 @@ export default function ChatInterface() {
       setLoading(true)
       // 生成图表
       const figResponse = await generatePlotlyFigureAction(id)
-      
+
       if (figResponse && figResponse.fig) {
         // 将图表添加到消息中
         setMessages((prev) => [
@@ -441,8 +426,8 @@ export default function ChatInterface() {
         )}
 
         {/* 消息列表 */}
-        <MessageList 
-          messages={messages} 
+        <MessageList
+          messages={messages}
           onRunQuery={handleRunQuery}
           onGenerateChart={handleGenerateChart}
           onExportData={handleExportData}

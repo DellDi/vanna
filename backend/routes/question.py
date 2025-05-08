@@ -99,11 +99,12 @@ async def run_sql(data: Dict[str, Any] = require_cache(fields=["sql"])):
     sql = data["sql"]
     try:
         df = vn.run_sql(sql=sql)
+        logger.info(f"✅ 执行SQL成功, ID: {id}, df: {df}")
         cache.set(id=id, field="df", value=df)
         return {
             "type": "df",
             "id": id,
-            "df": df.head(10).to_json(orient="records"),
+            "df": df.head(10).to_json(orient="records", date_format="iso"),
             "should_generate_chart": config["chart"],
         }
     except Exception as e:
@@ -117,41 +118,31 @@ async def run_sql(data: Dict[str, Any] = require_cache(fields=["sql"])):
 async def generate_questions(user: Any = Depends(require_auth)):
     """
     生成一系列可以提问的自然语言问题
-    
     根据训练数据或预定义模型生成可以提问的问题列表。
-    如果是chinook模型，返回预定义问题；否则从训练数据中随机抽取问题。
     """
-    # 特殊情况处理：如果模型是"chinook"，返回预定义问题
-    if hasattr(vn, "_model") and vn._model == "chinook":
-        return {
-            "type": "question_list",
-            "questions": [
-                "What are the top 10 artists by sales?",
-                "What are the total sales per year by country?",
-                "Who is the top selling artist in each genre? Show the sales numbers.",
-                "How do the employees rank in terms of sales performance?",
-                "Which 5 cities have the most customers?",
-            ],
-            "header": "Here are some questions you can ask:",
-        }
-    
+
     try:
         # 获取训练数据
         training_data = vn.get_training_data()
         logger.info(f"✅ 获取到训练数据: {len(training_data)}行")
-        
+
         # 如果训练数据为空，返回错误
         if training_data is None or len(training_data) == 0:
             logger.warning("⚠️ 未找到训练数据")
             return {
-                "type": "error",
-                "error": "No training data found. Please add some training data first.",
+                "type": "question_list",
+                "questions": [
+                    "各个项目的收入排名是什么?",
+                    "去年的总收入是多少?",
+                    "哪个项目的收入增长最快?",
+                ],
+                "header": "未找到训练数据 默认问题",
             }
-        
+
         # 从训练数据中筛选出有问题的数据
         valid_questions = training_data[training_data["question"].notnull()]
         logger.info(f"✅ 筛选出有效问题: {len(valid_questions)}个")
-        
+
         # 如果有效问题少于5个，则全部使用；否则随机抽取5个
         if len(valid_questions) <= 5:
             questions = valid_questions["question"].tolist()
@@ -159,7 +150,7 @@ async def generate_questions(user: Any = Depends(require_auth)):
         else:
             questions = valid_questions.sample(5)["question"].tolist()
             logger.info(f"✅ 随机抽取5个问题")
-            
+
         # 如果没有有效问题，返回空列表
         if len(questions) == 0:
             logger.warning("⚠️ 未找到有效问题")
@@ -168,7 +159,7 @@ async def generate_questions(user: Any = Depends(require_auth)):
                 "questions": [],
                 "header": "Go ahead and ask a question",
             }
-        
+
         return {
             "type": "question_list",
             "questions": questions,
@@ -201,6 +192,7 @@ async def generate_followup_questions(
         question = data["question"]
         sql = data["sql"]
 
+        logger.info(f"✅ 开始生成后续问题, ID: {id}, question: {question}, sql: {sql}, df: {df}")
         # 生成后续问题
         followup_questions = vn.generate_followup_questions(
             question=question, sql=sql, df=df
@@ -209,7 +201,7 @@ async def generate_followup_questions(
         # 缓存后续问题
         cache.set(id=id, field="followup_questions", value=followup_questions)
 
-        logger.info(f"✅ 已生成后续问题, ID: {id}")
+        logger.info(f"✅ 已生成后续问题, ID: {id}, followup_questions: {followup_questions}")
 
         return {
             "type": "text",

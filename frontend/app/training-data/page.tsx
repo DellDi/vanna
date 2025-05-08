@@ -16,7 +16,7 @@ export default function TrainingDataManagement() {
   const [trainingData, setTrainingData] = useState<TrainingData[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  
+
   // 过滤后的训练数据
   const filteredData = trainingData.filter(item => {
     if (item.question) {
@@ -33,10 +33,11 @@ export default function TrainingDataManagement() {
     try {
       setLoading(true)
       const response = await getTrainingDataAction()
-      
-      // 将JSON字符串解析为对象数组
-      const data = JSON.parse(response.df) as TrainingData[]
-      setTrainingData(data)
+      if (response && response.df) {
+        // 将JSON字符串解析为对象数组
+        const data = JSON.parse(response.df) as TrainingData[]
+        setTrainingData(data)
+      }
     } catch (error) {
       console.error('获取训练数据失败:', error)
       toast.error('获取训练数据失败')
@@ -68,10 +69,10 @@ export default function TrainingDataManagement() {
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  type="search" 
-                  placeholder="搜索..." 
-                  className="w-[200px] pl-8" 
+                <Input
+                  type="search"
+                  placeholder="搜索..."
+                  className="w-[200px] pl-8"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -98,9 +99,9 @@ export default function TrainingDataManagement() {
               </div>
             </div>
           ) : (
-            <TrainingDataTable 
-              data={filteredData} 
-              onDataChange={fetchTrainingData} 
+            <TrainingDataTable
+              data={filteredData}
+              onDataChange={fetchTrainingData}
             />
           )}
         </div>
