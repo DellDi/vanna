@@ -77,6 +77,7 @@ export default function ChatInterface() {
 
         {/* 消息列表 */}
         <MessageList
+          currentId={currentId || ''}
           messages={messages}
           onRunQuery={handleRunQuery}
           onGenerateChart={handleGenerateChart}

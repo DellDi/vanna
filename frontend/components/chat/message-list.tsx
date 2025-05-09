@@ -20,6 +20,7 @@ import {
 } from 'lucide-react'
 
 interface MessageListProps {
+  currentId: string
   messages: Message[]
   onRunQuery?: (id: string) => void
   onGenerateChart?: (id: string) => void
@@ -40,6 +41,7 @@ enum MessageContentType {
 }
 
 export function MessageList({
+  currentId,
   messages,
   onRunQuery,
   onGenerateChart,
@@ -230,7 +232,7 @@ export function MessageList({
             <Button
               variant="outline"
               className="gap-1"
-              onClick={() => handleGenerateChart(message.content, index)}
+              onClick={() => handleGenerateChart(currentId, index)}
               disabled={loadingStates[chartKey]}
             >
               <BarChart4 className="h-4 w-4" />
@@ -239,7 +241,7 @@ export function MessageList({
             <Button
               variant="outline"
               className="gap-1"
-              onClick={() => handleExportData(message.content)}
+              onClick={() => handleExportData(currentId)}
             >
               <FileSpreadsheet className="h-4 w-4" />
               <span>导出数据</span>
@@ -248,7 +250,7 @@ export function MessageList({
               variant="outline"
               className="gap-1"
               onClick={() =>
-                onGenerateFollowup && onGenerateFollowup(message.content)
+                onGenerateFollowup && onGenerateFollowup(currentId)
               }
             >
               <MessageSquare className="h-4 w-4" />
@@ -264,7 +266,7 @@ export function MessageList({
             <Button
               variant="outline"
               className="gap-1"
-              onClick={() => handleExportData(message.content)}
+              onClick={() => handleExportData(currentId)}
             >
               <Download className="h-4 w-4" />
               <span>下载图表</span>

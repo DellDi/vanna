@@ -1,6 +1,8 @@
 import os
 import sys
 import logging
+import re
+import shutil
 import uvicorn
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -27,6 +29,24 @@ logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
+
+def cleanup_uuid_folders(parent_dir):
+    """
+    清理uuid动态生成的文件夹
+    """
+    uuid_pattern = re.compile(
+        r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+    )
+    for item in os.listdir(parent_dir):
+        item_path = os.path.join(parent_dir, item)
+        if os.path.isdir(item_path) and uuid_pattern.match(item):
+            try:
+                shutil.rmtree(item_path)
+                logger.info(f"删除了: {item_path}")
+            except OSError as e:
+                logger.error(f"删除失败: {item_path} - {e}")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # 在应用启动时执行
@@ -34,7 +54,11 @@ async def lifespan(app: FastAPI):
     train_qa_data(vn)
     yield
     # 在应用关闭时执行
-    # 这里可以放置清理代码
+    # 清理当前项目的根目录的数据库文件 chroma.sqlite3
+    pathDir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    os.remove(os.path.join(pathDir, "chroma.sqlite3"))
+    # 清理uuid动态生成的文件夹
+    cleanup_uuid_folders(pathDir)
 
 
 # 创建API应用
