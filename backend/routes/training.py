@@ -23,8 +23,6 @@ router = APIRouter(tags=["SQL训练"])
 logger = logging.getLogger(__name__)
 
 
-
-
 @router.post("/train", summary="添加训练数据")
 async def train(request: TrainRequest, user: Any = Depends(require_auth)):
     """

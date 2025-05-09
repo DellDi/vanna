@@ -98,6 +98,12 @@ async def run_sql(data: Dict[str, Any] = require_cache(fields=["sql"])):
     id = data["id"]
     sql = data["sql"]
     try:
+        if not vn.run_sql_is_set:
+            raise HTTPException(
+                status_code=400,
+                detail="请连接到数据库，然后才能执行SQL查询。",
+            )
+
         df = vn.run_sql(sql=sql)
         logger.info(f"✅ 执行SQL成功, ID: {id}, df: {df}")
         cache.set(id=id, field="df", value=df)
@@ -192,7 +198,9 @@ async def generate_followup_questions(
         question = data["question"]
         sql = data["sql"]
 
-        logger.info(f"✅ 开始生成后续问题, ID: {id}, question: {question}, sql: {sql}, df: {df}")
+        logger.info(
+            f"✅ 开始生成后续问题, ID: {id}, question: {question}, sql: {sql}, df: {df}"
+        )
         # 生成后续问题
         followup_questions = vn.generate_followup_questions(
             question=question, sql=sql, df=df
@@ -201,7 +209,9 @@ async def generate_followup_questions(
         # 缓存后续问题
         cache.set(id=id, field="followup_questions", value=followup_questions)
 
-        logger.info(f"✅ 已生成后续问题, ID: {id}, followup_questions: {followup_questions}")
+        logger.info(
+            f"✅ 已生成后续问题, ID: {id}, followup_questions: {followup_questions}"
+        )
 
         return {
             "type": "text",
