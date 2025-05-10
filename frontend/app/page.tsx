@@ -4,6 +4,7 @@ import { Sidebar } from '@/components/layout/sidebar'
 import { MessageList } from '@/components/chat/message-list'
 import { MessageInput } from '@/components/chat/message-input'
 import { useChatInterface } from '@/hooks/useChatInterface'
+import { contentToMarkdown } from '@/lib/utils'
 
 export default function ChatInterface() {
   const {
@@ -17,11 +18,22 @@ export default function ChatInterface() {
     handleGenerateChart,
     handleExportData,
     handleGenerateFollowup,
-    handleRegenerateSQL
+    handleRegenerateSQL,
   } = useChatInterface()
+  console.log('🚀 ~ ChatInterface ~ messages:', messages)
+
+  // contentToMarkdown
+  const messagesWithMarkdown = messages.map((message) => {
+    if (message.type === 'assistant') {
+      return {
+        ...message,
+        content: contentToMarkdown(message.content),
+      }
+    }
+    return message
+  })
 
   // 页面内容渲染
-
   return (
     <div className="flex h-screen bg-background">
       {/* 侧边栏 */}
@@ -31,7 +43,7 @@ export default function ChatInterface() {
       <div className="flex-1 flex flex-col">
         <div className="text-center py-12 px-4">
           <h1 className="text-4xl font-bold bg-linear-to-r from-primary to-primary/60 text-transparent bg-clip-text">
-            欢迎使用 DellDi
+            欢迎使用数据助手
           </h1>
           <p className="text-muted-foreground mt-2 text-lg">
             您的 AI 驱动的 SQL 查询助手
@@ -40,7 +52,8 @@ export default function ChatInterface() {
 
         {/* 示例问题或后续问题建议 */}
         {(followupQuestions.length > 0 ||
-          (messages.length <= 1 && exampleQuestions.length > 0)) && (
+          (messagesWithMarkdown.length <= 1 &&
+            exampleQuestions.length > 0)) && (
           <div className="px-6 mb-4">
             <div className="max-w-4xl mx-auto">
               <h3 className="text-sm font-medium text-muted-foreground mb-2">
@@ -78,7 +91,7 @@ export default function ChatInterface() {
         {/* 消息列表 */}
         <MessageList
           currentId={currentId || ''}
-          messages={messages}
+          messages={messagesWithMarkdown}
           onRunQuery={handleRunQuery}
           onGenerateChart={handleGenerateChart}
           onExportData={handleExportData}

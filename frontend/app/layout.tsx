@@ -1,20 +1,20 @@
-import type React from "react"
-import "@/app/globals.css"
-import { Inter as FontSans } from "next/font/google"
-import { ThemeProvider } from "@/components/theme-provider"
-import { cn } from "@/lib/utils"
-import { Toaster } from "@/components/ui/sonner"
+import type React from 'react'
+import '@/app/globals.css'
+import { Inter as FontSans } from 'next/font/google'
+import { ThemeProvider } from '@/components/theme-provider'
+import { cn } from '@/lib/utils'
+import { Toaster } from '@/components/ui/sonner'
 
 const fontSans = FontSans({
-  subsets: ["latin"],
-  variable: "--font-sans",
+  subsets: ['latin'],
+  variable: '--font-sans',
 })
 
 export const metadata = {
-  title: "DellDi - AI SQL Assistant",
-  description: "Your AI-powered copilot for SQL queries",
+  title: 'DellDi - AI SQL Assistant',
+  description: 'Your AI-powered copilot for SQL queries',
   icons: {
-    icon: "/favicon.ico",
+    icon: '/favicon.ico',
   },
 }
 

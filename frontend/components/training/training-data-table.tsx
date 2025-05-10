@@ -27,7 +27,8 @@ import {
 import { Trash2 } from 'lucide-react'
 import { removeTrainingDataAction } from '@/lib/actions'
 import { toast } from 'sonner'
-
+import { MarkdownRenderer } from '../ui/markdown-renderer'
+import { ddlToMarkdown } from '@/lib/utils'
 interface TrainingDataTableProps {
   data: TrainingData[]
   onDataChange?: () => void
@@ -41,11 +42,24 @@ export function TrainingDataTable({
   const [itemsPerPage] = useState(5)
   const [loading, setLoading] = useState<Record<string | number, boolean>>({})
 
+  // 将数据中的content转换为Markdown格式
+  const dataWithMarkdown = data.map((item) => {
+    if (['sql', 'ddl'].includes(item.training_data_type)) {
+      let content = ddlToMarkdown(item.content)
+      console.log('🚀 ~ dataWithMarkdown ~ content:', content)
+      return {
+        ...item,
+        content: content,
+      }
+    }
+    return item
+  })
+
   // 计算分页
   const indexOfLastItem = currentPage * itemsPerPage
   const indexOfFirstItem = indexOfLastItem - itemsPerPage
-  const currentItems = data.slice(indexOfFirstItem, indexOfLastItem)
-  const totalPages = Math.ceil(data.length / itemsPerPage)
+  const currentItems = dataWithMarkdown.slice(indexOfFirstItem, indexOfLastItem)
+  const totalPages = Math.ceil(dataWithMarkdown.length / itemsPerPage)
 
   const handleDelete = async (id: string | number) => {
     try {
@@ -105,10 +119,8 @@ export function TrainingDataTable({
                 </TableCell>
                 <TableCell className="font-medium">{item.question}</TableCell>
                 <TableCell className="max-w-md">
-                  <div className="max-h-24 overflow-y-auto">
-                    <pre className="text-xs whitespace-pre-wrap font-mono bg-muted p-2 rounded-md">
-                      {item.content}
-                    </pre>
+                  <div className="max-h-48 overflow-y-auto">
+                    <MarkdownRenderer content={item.content} />
                   </div>
                 </TableCell>
                 <TableCell>
@@ -116,7 +128,9 @@ export function TrainingDataTable({
                     variant={
                       item.training_data_type === 'sql'
                         ? 'default'
-                        : 'secondary'
+                        : item.training_data_type === 'ddl'
+                        ? 'destructive'
+                        : 'outline'
                     }
                   >
                     {item.training_data_type}

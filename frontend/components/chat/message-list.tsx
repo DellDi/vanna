@@ -4,7 +4,7 @@
 'use client'
 
 import { Message } from '@/lib/types'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
@@ -19,6 +19,7 @@ import {
   MessageSquare,
 } from 'lucide-react'
 import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
+import { cn } from '@/lib/utils'
 
 interface MessageListProps {
   currentId: string
@@ -54,7 +55,7 @@ export function MessageList({
   const [loadingStates, setLoadingStates] = useState<Record<string, boolean>>(
     {}
   )
-  const [results, setResults] = useState<Record<string, any>>({})
+  // const [results, setResults] = useState<Record<string, any>>({})
 
   // 复制内容到剪贴板
   const handleCopy = (content: string, type: string = 'SQL') => {
@@ -296,12 +297,14 @@ export function MessageList({
         <div key={index} className="animate-slideIn">
           {message.type === 'user' && (
             <div className="flex items-start gap-4 max-w-4xl mx-auto">
-              <Avatar className="h-10 w-10 border">
-                <AvatarFallback>U</AvatarFallback>
+              <Avatar className="h-16 w-16 border">
+                <AvatarFallback className={cn('bg-background text-primary')}>
+                  Q
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-2">
                 <div className="flex items-center">
-                  <span className="font-medium">你</span>
+                  <span className="font-medium">用户</span>
                   <span className="text-xs text-muted-foreground ml-2">
                     刚刚
                   </span>
@@ -313,39 +316,37 @@ export function MessageList({
 
           {message.type === 'assistant' && (
             <div className="flex items-start gap-4 max-w-4xl mx-auto mt-6">
-              <Avatar className="h-10 w-10 bg-primary text-primary-foreground">
-                <AvatarFallback>DI</AvatarFallback>
+              <Avatar className="h-16 w-16 bg-primary text-primary-foreground">
+                <AvatarImage src="/delldi-icon.png" />
+                <AvatarFallback>Di助手</AvatarFallback>
               </Avatar>
               <div className="flex-1 space-y-4">
                 <div className="flex items-center">
-                  <span className="font-medium">DellDi</span>
+                  <span className="font-medium">助手</span>
                   <span className="text-xs text-muted-foreground ml-2">
                     刚刚
                   </span>
                 </div>
 
                 <Card className="overflow-hidden border border-muted">
-                  <CardContent className="p-0">
+                  <CardContent className="p-0 max-h-[400px] overflow-y-auto">
                     <MarkdownRenderer
                       content={message.content}
                       className="p-4 overflow-x-auto"
                     />
                   </CardContent>
                 </Card>
-
+                {/*
                 {results[index] && (
                   <Card className="overflow-hidden border border-muted mt-4">
-                    <CardContent className="p-4">
-                      {/* <pre className="text-sm overflow-x-auto">
-                        {JSON.stringify(results[index], null, 2)}
-                      </pre> */}
+                    <CardContent className="p-4 max-h-[400px] overflow-y-auto">
                       <MarkdownRenderer
                         content={JSON.stringify(results[index], null, 2)}
                         className="p-4 overflow-x-auto"
                       />
                     </CardContent>
                   </Card>
-                )}
+                )} */}
 
                 {/* 根据消息类型显示不同的操作按钮 */}
                 {renderActionButtons(message, index)}

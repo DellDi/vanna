@@ -111,6 +111,12 @@ export interface TrainRequest {
   documentation?: string;
 }
 
+// 训练响应类型
+export interface TrainResponse extends BaseResponse {
+  type: "train";
+  message: string;
+}
+
 // 消息类型
 export interface Message {
   type: "user" | "assistant";

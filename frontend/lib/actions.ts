@@ -11,7 +11,8 @@ import {
   QuestionCacheResponse,
   QuestionHistoryResponse,
   TrainRequest,
-  RemoveTrainingDataResponse
+  RemoveTrainingDataResponse,
+  TrainResponse
 } from './types';
 
 import * as api from './api-client';
@@ -146,7 +147,7 @@ export async function removeTrainingDataAction(id: string): Promise<RemoveTraini
 /**
  * 添加训练数据
  */
-export async function addTrainingDataAction(data: TrainRequest): Promise<{id: string}> {
+export async function addTrainingDataAction(data: TrainRequest): Promise<TrainResponse> {
   try {
     const result = await api.addTrainingData(data);
     return result;

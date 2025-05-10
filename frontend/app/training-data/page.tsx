@@ -1,56 +1,35 @@
-"use client"
+'use client'
 
-import { useState, useEffect } from "react"
-import { Download, Search, Filter } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Badge } from "@/components/ui/badge"
-import { Sidebar } from "@/components/layout/sidebar"
-import { TrainingDataTable } from "@/components/training/training-data-table"
-import { AddTrainingDataForm } from "@/components/training/add-training-data-form"
-import { TrainingData } from "@/lib/types"
-import { getTrainingDataAction } from "@/lib/actions"
-import { toast } from "sonner"
+import { useState, useEffect } from 'react'
+import { Download, Search, Filter } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Sidebar } from '@/components/layout/sidebar'
+import { TrainingDataTable } from '@/components/training/training-data-table'
+import { AddTrainingDataForm } from '@/components/training/add-training-data-form'
 import Loading from './loading'
+import { useTrainList } from '@/hooks/train/useTrainList'
 
 export default function TrainingDataManagement() {
-  const [trainingData, setTrainingData] = useState<TrainingData[]>([])
-  const [loading, setLoading] = useState(true)
+  const { trainList, loading, fetchData } = useTrainList()
   const [searchQuery, setSearchQuery] = useState('')
-
   // 过滤后的训练数据
-  const filteredData = trainingData.filter(item => {
+  const filteredData = trainList.filter((item) => {
+    let hasQuestion = false
+    let hasContent = false
     if (item.question) {
-      return item.question.toLowerCase().includes(searchQuery.toLowerCase())
+      hasQuestion = item.question
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
     }
     if (item.content) {
-      return item.content.toLowerCase().includes(searchQuery.toLowerCase())
+      hasContent = item.content
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase())
     }
-    return false
+    return hasQuestion || hasContent
   })
-
-  // 获取训练数据
-  const fetchTrainingData = async () => {
-    try {
-      setLoading(true)
-      const response = await getTrainingDataAction()
-      if (response && response.df) {
-        // 将JSON字符串解析为对象数组
-        const data = JSON.parse(response.df) as TrainingData[]
-        setTrainingData(data)
-      }
-    } catch (error) {
-      console.error('获取训练数据失败:', error)
-      toast.error('获取训练数据失败')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // 初始加载数据
-  useEffect(() => {
-    fetchTrainingData()
-  }, [])
 
   return (
     <div className="flex h-screen bg-background">
@@ -86,7 +65,7 @@ export default function TrainingDataManagement() {
                 <Download size={14} className="mr-1" />
                 导出
               </Button>
-              <AddTrainingDataForm onSuccess={fetchTrainingData} />
+              <AddTrainingDataForm onSuccess={fetchData} />
             </div>
           </div>
         </div>
@@ -95,10 +74,7 @@ export default function TrainingDataManagement() {
           {loading ? (
             <Loading />
           ) : (
-            <TrainingDataTable
-              data={filteredData}
-              onDataChange={fetchTrainingData}
-            />
+            <TrainingDataTable data={filteredData} onDataChange={fetchData} />
           )}
         </div>
       </div>

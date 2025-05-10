@@ -5,6 +5,7 @@ from vanna.qianwen import QianWenAI_Chat
 from vanna.chromadb import ChromaDB_VectorStore
 
 from dotenv import load_dotenv
+
 load_dotenv()
 
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ qianwen_config["language"] = "zh"
 qianwen_config["temperature"] = 0.2
 
 logger.info("qianwen_config配置初始化参数: %s", qianwen_config)
+
 
 class MyVanna(ChromaDB_VectorStore, QianWenAI_Chat):
     def __init__(self, config=None):
@@ -45,11 +47,13 @@ def create_vanna_instance():
 
     return vn
 
+
 # 全局Vanna实例
 vn = create_vanna_instance()
 
+
 # 初始化训练
-def initialize_training(vn: MyVanna=vn):
+def initialize_training(vn: MyVanna = vn):
     # 信息模式查询可能需要根据您的数据库进行一些调整。这是一个很好的起点。限定为ns_dws库
     df_information_schema = vn.run_sql(
         "SELECT * FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = 'ns_dws'"
@@ -64,10 +68,25 @@ def initialize_training(vn: MyVanna=vn):
     # 业务术语或定义的文档训练
     vn.train(
         documentation="""
-        -收缴率定义为：物业费实收/物业费应收 * 100%
-        -2024年收缴率：2024年物业费实收/2024年物业费应收 * 100%
-        -集团：中国金茂
-        -狗：金茂
+### 收缴率计算
+
+#### 定义
+
+- **收缴率定义：** 物业费实收 / 物业费应收 * 100%
+
+#### 年度收缴率示例
+
+- **2024年收缴率：** 2024年物业费实收 / 2024年物业费应收 * 100%
+
+#### 其他信息
+
+#### 组织
+
+- **集团：** 中国金茂
+
+#### 杂项
+
+- **提及：** 狗：中国金茂
     """
     )
 
@@ -78,7 +97,9 @@ def train_qa_data(vn: MyVanna = vn):
         # 获取当前文件绝对路径
         current_dir = os.path.dirname(os.path.abspath(__file__))
         project_root = os.path.dirname(current_dir)
-        training_data_path = os.path.join(project_root, "main", "data", "train-sql-qa.json")
+        training_data_path = os.path.join(
+            project_root, "main", "data", "train-sql-qa.json"
+        )
 
         # 检查文件是否存在
         if not os.path.exists(training_data_path):
@@ -108,7 +129,7 @@ def train_qa_data(vn: MyVanna = vn):
 
 
 # 导出vn实例供FastAPI使用~
-__all__ = ['vn']
+__all__ = ["vn"]
 
 # 只有在作为主模块运行时才执行训练初始化
 if __name__ == "__main__":

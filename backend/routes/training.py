@@ -11,6 +11,7 @@ from main.run import vn
 from backend.auth import require_auth
 from backend.models import (
     TrainRequest,
+    TrainResponse,
     TrainingDataResponse,
     RemoveTrainingDataRequest,
     RemoveTrainingDataResponse,
@@ -23,7 +24,7 @@ router = APIRouter(tags=["SQL训练"])
 logger = logging.getLogger(__name__)
 
 
-@router.post("/train", summary="添加训练数据")
+@router.post("/train", response_model=TrainResponse, summary="添加训练数据")
 async def train(request: TrainRequest, user: Any = Depends(require_auth)):
     """
     添加训练数据
@@ -31,34 +32,28 @@ async def train(request: TrainRequest, user: Any = Depends(require_auth)):
     添加自定义训练数据，用于优化模型生成SQL的能力。
     可以提供问题、SQL、DDL和文档说明。
     """
+    # 获取训练数据
+    question = request.question
+    sql = request.sql
+    ddl = request.ddl or ""
+    documentation = request.documentation or ""
+
     try:
-        # 获取训练数据
-        question = request.question
-        sql = request.sql
-        ddl = request.ddl or ""
-        documentation = request.documentation or ""
-
-        # 验证必要参数
-        if not question or not question.strip():
-            logger.error("❌ 未提供有效问题")
-            raise HTTPException(status_code=400, detail="未提供有效问题")
-
-        if not sql or not sql.strip():
-            logger.error("❌ 未提供有效SQL")
-            raise HTTPException(status_code=400, detail="未提供有效SQL")
-
         # 添加训练数据
-        vn.train(question=question, sql=sql, ddl=ddl, documentation=documentation)
+        id = vn.train(question=question, sql=sql, ddl=ddl, documentation=documentation)
 
         logger.info(f"✅ 已添加训练数据: {question}")
-
-        return {"type": "train", "message": "训练数据添加成功"}
+        return TrainResponse(type="train", message="训练数据添加成功", id=id)
     except Exception as e:
         logger.error(f"❌ 添加训练数据失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.delete("/remove_training_data", response_model=RemoveTrainingDataResponse, summary="删除训练数据")
+@router.delete(
+    "/remove_training_data",
+    response_model=RemoveTrainingDataResponse,
+    summary="删除训练数据",
+)
 async def remove_training_data(
     request: RemoveTrainingDataRequest, user: Any = Depends(require_auth)
 ):

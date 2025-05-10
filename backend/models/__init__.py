@@ -20,6 +20,7 @@ from .schemas import (
     DeleteResponse,
     ConfigResponse,
     ErrorResponse,
+    TrainResponse,
     TrainingDataResponse,
     RemoveTrainingDataResponse
 )
@@ -75,6 +76,7 @@ __all__ = [
     'ErrorResponse',
     'RemoveTrainingDataResponse',
     'TrainingDataResponse',
+    'TrainResponse',
 
     # 数据库模型
     'Base',

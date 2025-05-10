@@ -16,7 +16,8 @@ import {
   TextResponse,
   RewrittenQuestionResponse,
   DeleteResponse,
-  RemoveTrainingDataResponse
+  RemoveTrainingDataResponse,
+  TrainResponse
 } from './types';
 import { toast } from 'sonner';
 // 代理API基础URL
@@ -180,8 +181,8 @@ export async function removeTrainingData(id: string): Promise<RemoveTrainingData
 /**
  * 添加训练数据
  */
-export async function addTrainingData(data: TrainRequest): Promise<{ id: string }> {
-  return apiRequest<{ id: string }>('/train', 'POST', {}, data);
+export async function addTrainingData(data: TrainRequest): Promise<TrainResponse> {
+  return apiRequest<TrainResponse>('/train', 'POST', {}, data);
 }
 
 /**

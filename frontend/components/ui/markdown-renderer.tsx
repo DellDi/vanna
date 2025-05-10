@@ -98,11 +98,11 @@ const CodeBlock = memo(({ inline, className, children = '', ...props }: any) => 
   const codeStyle = theme === 'dark' ? vscDarkPlus : vs
 
   return (
-    <div className="relative group">
+    <div className="relative group not-prose">
       {/* 语言标签和复制按钮 */}
       <div className="absolute right-2 top-2 flex items-center gap-2">
         {languageShowName && (
-          <span className="text-xs px-2 py-1 rounded bg-primary/20 text-primary-foreground font-medium">
+          <span className="text-xs px-2 py-1 rounded bg-primary/60 text-primary-foreground font-medium">
             {languageShowName}
           </span>
         )}
@@ -111,7 +111,11 @@ const CodeBlock = memo(({ inline, className, children = '', ...props }: any) => 
           className="p-1.5 rounded-md bg-muted hover:bg-muted/80 text-foreground transition-colors"
           aria-label="复制代码"
         >
-          {copied ? <Check size={14} className="text-green-500" /> : <Copy size={14} />}
+          {copied ? (
+            <Check size={14} className="text-green-500" />
+          ) : (
+            <Copy size={14} />
+          )}
         </button>
       </div>
 
@@ -130,7 +134,7 @@ const CodeBlock = memo(({ inline, className, children = '', ...props }: any) => 
           style: {
             fontSize: '0.875rem',
             fontFamily: 'var(--font-mono)',
-          }
+          },
         }}
         PreTag="div"
         {...props}

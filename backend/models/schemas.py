@@ -100,6 +100,11 @@ class TrainRequest(BaseModel):
     ddl: Optional[str] = Field(None, description="DDL语句")
     documentation: Optional[str] = Field(None, description="文档内容")
 
+class TrainResponse(BaseResponse):
+    """添加训练数据响应"""
+    type: str = Field("train", description="响应类型")
+    message: str = Field(..., description="训练消息")
+
 
 class UpdateSQLRequest(BaseModel):
     """更新SQL查询请求"""

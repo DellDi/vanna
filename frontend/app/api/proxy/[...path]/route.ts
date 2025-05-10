@@ -9,8 +9,9 @@ export async function GET(
   { params }: { params: { path: string[] } }
 ) {
   try {
+    const { path: pathParams } = await params;
     // 获取路径参数和查询参数
-    const path = `/${params.path.join('/')}`;
+    const path = `/${pathParams.join('/')}`;
     const { searchParams } = new URL(request.url);
 
     // 构建后端API URL
@@ -85,8 +86,9 @@ export async function POST(
   { params }: { params: { path: string[] } }
 ) {
   try {
+    const { path: pathParams } = await params;
     // 获取路径参数和请求体
-    const path = `/${params.path.join('/')}`;
+    const path = `/${pathParams.join('/')}`;
     const { searchParams } = new URL(request.url);
     const body = await request.json().catch(() => ({}));
 
@@ -122,8 +124,9 @@ export async function DELETE(
   { params }: { params: { path: string[] } }
 ) {
   try {
+    const { path: pathParams } = await params;
     // 获取路径参数和请求体
-    const path = `/${params.path.join('/')}`;
+    const path = `/${pathParams.join('/')}`;
     const { searchParams } = new URL(request.url);
     const body = await request.json().catch(() => ({}));
 
