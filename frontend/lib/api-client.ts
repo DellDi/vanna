@@ -15,7 +15,8 @@ import {
   TrainRequest,
   TextResponse,
   RewrittenQuestionResponse,
-  DeleteResponse
+  DeleteResponse,
+  RemoveTrainingDataResponse
 } from './types';
 import { toast } from 'sonner';
 // 代理API基础URL
@@ -53,16 +54,35 @@ async function apiRequest<T>(
   }
 
   // 发送请求
-  const response = await fetch(url);
+  const response = await fetch(url, requestOptions);
 
   // 处理错误
   if (!response.ok) {
-    toast.error(`请求失败: ${response.status}`);
-    throw new Error(`请求失败: ${response.status}`);
+    const errorText = await response.text().catch(() => '未知错误');
+    toast.error(`请求失败: ${response.status} - ${errorText.substring(0, 100)}`);
+    throw new Error(`请求失败: ${response.status} - ${errorText}`);
   }
 
-  // 返回响应数据
-  return response.json();
+  // 获取响应的内容类型
+  const contentType = response.headers.get('content-type') || '';
+
+  // 根据内容类型处理响应
+  if (contentType.includes('application/json')) {
+    // JSON 响应
+    return response.json() as Promise<T>;
+  } else if (
+    contentType.includes('text/csv') ||
+    contentType.includes('application/octet-stream') ||
+    contentType.includes('application/vnd.ms-excel') ||
+    contentType.includes('application/pdf') ||
+    contentType.includes('image/')
+  ) {
+    // 文件下载响应
+    return response.blob() as unknown as Promise<T>;
+  } else {
+    // 其他类型的响应，例如纯文本
+    return response.text() as unknown as Promise<T>;
+  }
 }
 
 /**
@@ -128,9 +148,11 @@ export async function deleteQuestion(id: string): Promise<DeleteResponse> {
 
 /**
  * 下载CSV文件
+ * @param id 要下载的数据 ID
+ * @returns 返回 Blob 对象，可用于创建下载链接
  */
-export function getCSVDownloadURL(id: string): string {
-  return `${PROXY_API_BASE_URL}/download_csv?id=${encodeURIComponent(id)}`;
+export async function downloadCSV(id: string): Promise<Blob> {
+  return apiRequest<Blob>('/download_csv', 'GET', { id });
 }
 
 /**
@@ -139,6 +161,7 @@ export function getCSVDownloadURL(id: string): string {
 export async function generatePlotlyFigure(id: string): Promise<PlotlyFigureResponse> {
   return apiRequest<PlotlyFigureResponse>('/generate_plotly_figure', 'GET', { id });
 }
+
 
 /**
  * 获取训练数据
@@ -150,8 +173,8 @@ export async function getTrainingData(): Promise<DataFrameResponse> {
 /**
  * 删除训练数据
  */
-export async function removeTrainingData(id: string): Promise<{ success: boolean }> {
-  return apiRequest<{ success: boolean }>('/remove_training_data', 'POST', {}, { id });
+export async function removeTrainingData(id: string): Promise<RemoveTrainingDataResponse> {
+  return apiRequest<RemoveTrainingDataResponse>('/remove_training_data', 'DELETE', {}, { id });
 }
 
 /**

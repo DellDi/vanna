@@ -1,14 +1,21 @@
 /**
  * 训练数据表格组件 - 用于展示和管理训练数据
  */
-"use client"
+'use client'
 
-import { useState } from "react"
-import { TrainingData } from "@/lib/types"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useState } from 'react'
+import { TrainingData } from '@/lib/types'
+import { Button } from '@/components/ui/button'
+import { Card } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import {
   Pagination,
   PaginationContent,
@@ -16,17 +23,20 @@ import {
   PaginationLink,
   PaginationNext,
   PaginationPrevious,
-} from "@/components/ui/pagination"
-import { Trash2 } from "lucide-react"
-import { removeTrainingDataAction } from "@/lib/actions"
-import { toast } from "sonner"
+} from '@/components/ui/pagination'
+import { Trash2 } from 'lucide-react'
+import { removeTrainingDataAction } from '@/lib/actions'
+import { toast } from 'sonner'
 
 interface TrainingDataTableProps {
   data: TrainingData[]
   onDataChange?: () => void
 }
 
-export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps) {
+export function TrainingDataTable({
+  data,
+  onDataChange,
+}: TrainingDataTableProps) {
   const [currentPage, setCurrentPage] = useState(1)
   const [itemsPerPage] = useState(5)
   const [loading, setLoading] = useState<Record<string | number, boolean>>({})
@@ -39,17 +49,17 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
 
   const handleDelete = async (id: string | number) => {
     try {
-      setLoading(prev => ({ ...prev, [id]: true }))
+      setLoading((prev) => ({ ...prev, [id]: true }))
       await removeTrainingDataAction(String(id))
-      toast.success("训练数据已删除")
+      toast.success('训练数据已删除')
       if (onDataChange) {
         onDataChange()
       }
     } catch (error) {
-      console.error("删除训练数据失败:", error)
-      toast.error("删除训练数据失败")
+      console.error('删除训练数据失败:', error)
+      toast.error('删除训练数据失败')
     } finally {
-      setLoading(prev => ({ ...prev, [id]: false }))
+      setLoading((prev) => ({ ...prev, [id]: false }))
     }
   }
 
@@ -72,7 +82,10 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
         <TableBody>
           {currentItems.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+              <TableCell
+                colSpan={4}
+                className="text-center py-8 text-muted-foreground"
+              >
                 暂无训练数据
               </TableCell>
             </TableRow>
@@ -87,7 +100,7 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
                     disabled={loading[item.id]}
                   >
                     <Trash2 size={14} className="mr-1" />
-                    {loading[item.id] ? "删除中..." : "删除"}
+                    {loading[item.id] ? '删除中...' : '删除'}
                   </Button>
                 </TableCell>
                 <TableCell className="font-medium">{item.question}</TableCell>
@@ -99,7 +112,15 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={item.training_data_type === "sql" ? "default" : "secondary"}>{item.training_data_type}</Badge>
+                  <Badge
+                    variant={
+                      item.training_data_type === 'sql'
+                        ? 'default'
+                        : 'secondary'
+                    }
+                  >
+                    {item.training_data_type}
+                  </Badge>
                 </TableCell>
               </TableRow>
             ))
@@ -112,23 +133,38 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
             <PaginationContent>
               <PaginationItem>
                 <PaginationPrevious
-                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.max(prev - 1, 1))
+                  }
+                  className={
+                    currentPage === 1 ? 'pointer-events-none opacity-50' : ''
+                  }
                 />
               </PaginationItem>
 
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                <PaginationItem key={page}>
-                  <PaginationLink onClick={() => setCurrentPage(page)} isActive={currentPage === page}>
-                    {page}
-                  </PaginationLink>
-                </PaginationItem>
-              ))}
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                (page) => (
+                  <PaginationItem key={page}>
+                    <PaginationLink
+                      onClick={() => setCurrentPage(page)}
+                      isActive={currentPage === page}
+                    >
+                      {page}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
 
               <PaginationItem>
                 <PaginationNext
-                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                  onClick={() =>
+                    setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                  }
+                  className={
+                    currentPage === totalPages
+                      ? 'pointer-events-none opacity-50'
+                      : ''
+                  }
                 />
               </PaginationItem>
             </PaginationContent>

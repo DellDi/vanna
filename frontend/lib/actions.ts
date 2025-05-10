@@ -10,7 +10,8 @@ import {
   PlotlyFigureResponse,
   QuestionCacheResponse,
   QuestionHistoryResponse,
-  TrainRequest
+  TrainRequest,
+  RemoveTrainingDataResponse
 } from './types';
 
 import * as api from './api-client';
@@ -103,6 +104,21 @@ export async function generatePlotlyFigureAction(id: string): Promise<PlotlyFigu
 }
 
 /**
+ * 导出数据为CSV
+ * @param id 要导出的数据 ID
+ * @returns 返回 Blob 对象，可用于创建下载链接
+ */
+export async function exportDataAction(id: string): Promise<Blob> {
+  try {
+    return await api.downloadCSV(id);
+  } catch (error) {
+    console.error('导出数据失败:', error);
+    throw new Error('导出数据失败');
+  }
+}
+
+
+/**
  * 获取训练数据
  */
 export async function getTrainingDataAction(): Promise<DataFrameResponse> {
@@ -117,7 +133,7 @@ export async function getTrainingDataAction(): Promise<DataFrameResponse> {
 /**
  * 删除训练数据
  */
-export async function removeTrainingDataAction(id: string): Promise<{success: boolean}> {
+export async function removeTrainingDataAction(id: string): Promise<RemoveTrainingDataResponse> {
   try {
     const result = await api.removeTrainingData(id);
     return result;

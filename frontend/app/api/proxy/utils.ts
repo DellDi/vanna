@@ -14,15 +14,15 @@ export async function handleApiResponse(response: Response) {
     const errorText = await response.text();
     throw new Error(`API请求失败: ${response.status} - ${errorText}`);
   }
-  
+
   // 检查内容类型
   const contentType = response.headers.get('content-type');
-  
+
   // 如果是JSON，解析并返回
   if (contentType && contentType.includes('application/json')) {
     return response.json();
   }
-  
+
   // 否则返回文本
   return response.text();
 }
@@ -51,13 +51,13 @@ export function createProxyRequestInit(
 // 构建URL查询参数
 export function buildQueryString(params: Record<string, string>): string {
   const searchParams = new URLSearchParams();
-  
+
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
       searchParams.append(key, value);
     }
   });
-  
+
   const queryString = searchParams.toString();
   return queryString ? `?${queryString}` : '';
 }

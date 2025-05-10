@@ -19,7 +19,9 @@ from .schemas import (
     DeleteQuestionRequest,
     DeleteResponse,
     ConfigResponse,
-    ErrorResponse
+    ErrorResponse,
+    TrainingDataResponse,
+    RemoveTrainingDataResponse
 )
 
 # 导出数据库模型
@@ -71,7 +73,9 @@ __all__ = [
     'DeleteResponse',
     'ConfigResponse',
     'ErrorResponse',
-    
+    'RemoveTrainingDataResponse',
+    'TrainingDataResponse',
+
     # 数据库模型
     'Base',
     'Question',
@@ -81,13 +85,13 @@ __all__ = [
     'Summary',
     'FollowupQuestion',
     'TrainingData',
-    
+
     # 数据库配置
     'get_db',
     'get_db_session',
     'create_all_tables',
     'init_db',
-    
+
     # 仓库
     'QuestionRepository',
     'SQLQueryRepository',

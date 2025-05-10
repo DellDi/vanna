@@ -56,6 +56,28 @@ export interface DataFrameResponse extends BaseResponse {
   should_generate_chart?: boolean; // 是否应该自动生成图表
 }
 
+// 训练数据类型
+export interface TrainingData {
+  id: string | number;
+  question: string;
+  content: string;
+  training_data_type: "sql" | "documentation" | "ddl";
+}
+
+// 训练数据删除响应
+export interface RemoveTrainingDataResponse extends BaseResponse {
+  type: "remove_training_data";
+  message: string;
+}
+
+// 训练请求类型
+export interface TrainRequest {
+  question?: string;
+  sql?: string;
+  ddl?: string;
+  documentation?: string;
+}
+
 // Plotly图表响应
 export interface PlotlyFigureResponse extends BaseResponse {
   type: "plotly_figure";
@@ -80,13 +102,6 @@ export interface QuestionHistoryResponse extends BaseResponse {
   questions: Array<{id: string; question: string}>;
 }
 
-// 训练数据类型
-export interface TrainingData {
-  id: string | number;
-  question: string;
-  content: string;
-  training_data_type: "sql" | "documentation" | "ddl";
-}
 
 // 训练请求类型
 export interface TrainRequest {

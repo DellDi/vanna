@@ -29,6 +29,18 @@ class QuestionListResponse(BaseResponse):
     header: str = Field(..., description="问题列表标题")
 
 
+# 训练数据响应
+class TrainingDataResponse(BaseModel):
+    type: str = Field("df", description="响应类型")
+    id: str = Field(..., description="训练数据ID")
+    df: str = Field(..., description="训练数据")
+
+# 删除训练数据响应
+class RemoveTrainingDataResponse(BaseResponse):
+    """删除训练数据响应"""
+    type: str = Field("remove_training_data", description="响应类型")
+    message: str = Field(..., description="删除消息")
+
 # SQL生成响应
 class GenerateSQLResponse(BaseResponse):
     """SQL生成响应"""

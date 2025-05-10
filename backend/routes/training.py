@@ -1,19 +1,19 @@
 """
 训练相关路由模块 - 包含模型训练、训练数据管理等功能
 """
-import logging
-from typing import Any, Dict, List, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Body
-from pydantic import BaseModel
+import logging
+from typing import Any
+
+from fastapi import APIRouter, Depends, HTTPException
 
 from main.run import vn
 from backend.auth import require_auth
-from backend.cache import cache
 from backend.models import (
     TrainRequest,
+    TrainingDataResponse,
     RemoveTrainingDataRequest,
-    BaseResponse,
+    RemoveTrainingDataResponse,
 )
 
 # 创建路由
@@ -52,50 +52,38 @@ async def train(request: TrainRequest, user: Any = Depends(require_auth)):
 
         logger.info(f"✅ 已添加训练数据: {question}")
 
-        return {
-            "type": "train",
-            "message": "训练数据添加成功"
-        }
+        return {"type": "train", "message": "训练数据添加成功"}
     except Exception as e:
         logger.error(f"❌ 添加训练数据失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/remove_training_data", summary="删除训练数据")
-async def remove_training_data(request: RemoveTrainingDataRequest, user: Any = Depends(require_auth)):
+@router.delete("/remove_training_data", response_model=RemoveTrainingDataResponse, summary="删除训练数据")
+async def remove_training_data(
+    request: RemoveTrainingDataRequest, user: Any = Depends(require_auth)
+):
     """
     删除训练数据
 
     根据问题或SQL删除对应的训练数据。
     """
     try:
-        # 获取参数
-        question = request.question
-        sql = request.sql
-
-        # 验证参数
-        if not question and not sql:
-            logger.error("❌ 未提供问题或SQL")
-            raise HTTPException(status_code=400, detail="必须提供问题或SQL中的至少一项")
-
+        id = request.id
+        logger.info(f"✅ 已删除ID对应的训练数据: {id}")
         # 删除训练数据
-        if question:
-            vn.remove_training_data(question=question)
-            logger.info(f"✅ 已删除问题对应的训练数据: {question}")
-        elif sql:
-            vn.remove_training_data(sql=sql)
-            logger.info(f"✅ 已删除SQL对应的训练数据: {sql[:50]}...")
+        if id:
+            vn.remove_training_data(id=id)
+            logger.info(f"✅ 已删除ID对应的训练数据: {id}")
 
-        return {
-            "type": "remove_training_data",
-            "message": "训练数据删除成功"
-        }
+        return {"id": id, "type": "remove_training_data", "message": "训练数据删除成功"}
     except Exception as e:
         logger.error(f"❌ 删除训练数据失败: {str(e)}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/get_training_data", summary="获取训练数据")
+@router.get(
+    "/get_training_data", response_model=TrainingDataResponse, summary="获取训练数据"
+)
 async def get_training_data(user: Any = Depends(require_auth)):
     """
     获取所有训练数据

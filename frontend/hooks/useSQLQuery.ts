@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { 
+import {
   generateSQLAction,
   runSQLAction,
-  generatePlotlyFigureAction
+  generatePlotlyFigureAction,
+  exportDataAction
 } from '@/lib/actions'
 
 /**
@@ -80,7 +81,7 @@ export function useSQLQuery() {
           const formattedData = JSON.stringify(data, null, 2)
 
           toast.success('查询执行成功')
-          
+
           return {
             success: true,
             data,
@@ -96,7 +97,7 @@ export function useSQLQuery() {
           }
         }
       }
-      
+
       return { success: false }
     } catch (error) {
       console.error('执行查询失败:', error)
@@ -132,7 +133,7 @@ export function useSQLQuery() {
           fig: figResponse.fig
         }
       }
-      
+
       return { success: false }
     } catch (error) {
       console.error('生成图表失败:', error)
@@ -147,7 +148,7 @@ export function useSQLQuery() {
    * 导出数据为CSV
    * @param id 查询ID
    */
-  const exportData = (id: string) => {
+  const exportData = async (id: string) => {
     if (!id) {
       toast.error('无效的查询ID')
       return false
@@ -155,7 +156,13 @@ export function useSQLQuery() {
 
     try {
       // 导出数据为CSV
-      window.open(`/api/v0/download_csv?id=${id}`, '_blank')
+      const blob = await exportDataAction(id)
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'query_result.csv'
+      link.click()
+      URL.revokeObjectURL(url)
       toast.success('数据导出成功')
       return true
     } catch (error) {
