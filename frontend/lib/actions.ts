@@ -1,7 +1,6 @@
 /**
  * Server Actions - 使用Next.js的Server Actions特性实现与后端的交互
  */
-'use server'
 
 import {
   InitializeResponse,
@@ -14,8 +13,7 @@ import {
   TrainRequest
 } from './types';
 
-import * as api from './api';
-import { revalidatePath } from 'next/cache';
+import * as api from './api-client';
 
 export async function initializeAction(): Promise<InitializeResponse> {
   try {
@@ -122,7 +120,6 @@ export async function getTrainingDataAction(): Promise<DataFrameResponse> {
 export async function removeTrainingDataAction(id: string): Promise<{success: boolean}> {
   try {
     const result = await api.removeTrainingData(id);
-    revalidatePath('/training-data');
     return result;
   } catch (error) {
     console.error('删除训练数据失败:', error);
@@ -136,7 +133,6 @@ export async function removeTrainingDataAction(id: string): Promise<{success: bo
 export async function addTrainingDataAction(data: TrainRequest): Promise<{id: string}> {
   try {
     const result = await api.addTrainingData(data);
-    revalidatePath('/training-data');
     return result;
   } catch (error) {
     console.error('添加训练数据失败:', error);
@@ -194,8 +190,7 @@ export async function getQuestionHistoryAction(): Promise<QuestionHistoryRespons
 export async function createNewConversationAction(): Promise<{success: boolean}> {
   try {
     const result = await api.createNewConversation();
-    // 重新验证主页面缓存
-    revalidatePath('/');
+
     return result;
   } catch (error) {
     console.error('新建对话失败:', error);

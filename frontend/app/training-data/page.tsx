@@ -11,6 +11,7 @@ import { AddTrainingDataForm } from "@/components/training/add-training-data-for
 import { TrainingData } from "@/lib/types"
 import { getTrainingDataAction } from "@/lib/actions"
 import { toast } from "sonner"
+import Loading from './loading'
 
 export default function TrainingDataManagement() {
   const [trainingData, setTrainingData] = useState<TrainingData[]>([])
@@ -92,12 +93,7 @@ export default function TrainingDataManagement() {
 
         <div className="p-6">
           {loading ? (
-            <div className="flex items-center justify-center p-8">
-              <div className="text-center">
-                <div className="animate-spin h-8 w-8 border-4 border-primary border-t-transparent rounded-full mx-auto mb-4"></div>
-                <p className="text-muted-foreground">加载中...</p>
-              </div>
-            </div>
+            <Loading />
           ) : (
             <TrainingDataTable
               data={filteredData}

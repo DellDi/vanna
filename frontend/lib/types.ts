@@ -85,7 +85,7 @@ export interface TrainingData {
   id: string | number;
   question: string;
   content: string;
-  type: "sql" | "documentation" | "ddl";
+  training_data_type: "sql" | "documentation" | "ddl";
 }
 
 // 训练请求类型

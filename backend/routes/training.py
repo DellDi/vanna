@@ -103,14 +103,11 @@ async def get_training_data(user: Any = Depends(require_auth)):
     返回系统中所有的训练数据，包括问题、SQL、DDL和文档说明。
     """
     try:
-        # 获取训练数据
-        training_data = vn.get_training_data()
-
-        logger.info(f"✅ 已获取训练数据，共 {len(training_data)} 条")
-
+        df = vn.get_training_data()
         return {
-            "type": "training_data",
-            "training_data": training_data
+            "type": "df",
+            "id": "training_data",
+            "df": df.head(25).to_json(orient="records"),
         }
     except Exception as e:
         logger.error(f"❌ 获取训练数据失败: {str(e)}")

@@ -80,8 +80,8 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
             currentItems.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <Button 
-                    variant="destructive" 
+                  <Button
+                    variant="destructive"
                     size="sm"
                     onClick={() => handleDelete(item.id)}
                     disabled={loading[item.id]}
@@ -99,7 +99,7 @@ export function TrainingDataTable({ data, onDataChange }: TrainingDataTableProps
                   </div>
                 </TableCell>
                 <TableCell>
-                  <Badge variant={item.type === "sql" ? "default" : "secondary"}>{item.type}</Badge>
+                  <Badge variant={item.training_data_type === "sql" ? "default" : "secondary"}>{item.training_data_type}</Badge>
                 </TableCell>
               </TableRow>
             ))
