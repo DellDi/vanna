@@ -18,6 +18,7 @@ import {
   FileSpreadsheet,
   MessageSquare,
 } from 'lucide-react'
+import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 
 interface MessageListProps {
   currentId: string
@@ -325,18 +326,23 @@ export function MessageList({
 
                 <Card className="overflow-hidden border border-muted">
                   <CardContent className="p-0">
-                    <pre className="font-mono text-sm p-4 overflow-x-auto bg-black text-green-400">
-                      {message.content}
-                    </pre>
+                    <MarkdownRenderer
+                      content={message.content}
+                      className="p-4 overflow-x-auto"
+                    />
                   </CardContent>
                 </Card>
 
                 {results[index] && (
                   <Card className="overflow-hidden border border-muted mt-4">
                     <CardContent className="p-4">
-                      <pre className="text-sm overflow-x-auto">
+                      {/* <pre className="text-sm overflow-x-auto">
                         {JSON.stringify(results[index], null, 2)}
-                      </pre>
+                      </pre> */}
+                      <MarkdownRenderer
+                        content={JSON.stringify(results[index], null, 2)}
+                        className="p-4 overflow-x-auto"
+                      />
                     </CardContent>
                   </Card>
                 )}

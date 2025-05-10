@@ -82,11 +82,11 @@ export async function generateRewrittenQuestion(lastQuestion: string, newQuestio
   const encodedLastQuestion = encodeURIComponent(lastQuestion);
   const encodedNewQuestion = encodeURIComponent(newQuestion);
   const response = await fetch(`${API_BASE_URL}/generate_rewritten_question?last_question=${encodedLastQuestion}&new_question=${encodedNewQuestion}`);
-  
+
   if (!response.ok) {
     throw new Error(`API error: ${response.status}`);
   }
-  
+
   return await response.json();
 }
 
@@ -103,11 +103,11 @@ export async function deleteQuestion(id: string): Promise<DeleteResponse> {
     },
     body: JSON.stringify({ id })
   });
-  
+
   if (!response.ok) {
     throw new Error(`删除失败: ${response.status}`);
   }
-  
+
   return await response.json();
 }
 

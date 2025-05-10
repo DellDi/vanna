@@ -97,3 +97,86 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
+
+/* Markdown 渲染器自定义样式 */
+@layer components {
+  /* 暗色模式下的代码块样式 */
+  .dark-code pre {
+    background-color: #1E1E1E;
+    border: 1px solid #333;
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+  
+  .dark-code code {
+    color: #60A5FA; /* blue-400 */
+  }
+  
+  .dark-code a {
+    color: #60A5FA; /* blue-400 */
+  }
+  
+  .dark-code a:hover {
+    color: #93C5FD; /* blue-300 */
+  }
+  
+  .dark-code blockquote {
+    border-left: 4px solid rgba(59, 130, 246, 0.5); /* blue-500/50 */
+    background-color: rgba(23, 37, 84, 0.1); /* blue-950/10 */
+  }
+  
+  .dark-code table {
+    border-color: #333;
+  }
+  
+  .dark-code thead {
+    background-color: #333;
+  }
+  
+  .dark-code th {
+    color: #E5E7EB; /* gray-200 */
+  }
+  
+  .dark-code tr:nth-child(even) {
+    background-color: #222;
+  }
+
+  /* 亮色模式下的代码块样式 */
+  .light-code pre {
+    background-color: #FAFAFA;
+    border: 1px solid #E5E7EB; /* gray-200 */
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+  
+  .light-code code {
+    color: #2563EB; /* blue-600 */
+  }
+  
+  .light-code a {
+    color: #2563EB; /* blue-600 */
+  }
+  
+  .light-code a:hover {
+    color: #1D4ED8; /* blue-700 */
+  }
+  
+  .light-code blockquote {
+    border-left: 4px solid rgba(59, 130, 246, 0.5); /* blue-500/50 */
+    background-color: rgba(239, 246, 255, 0.5); /* blue-50/50 */
+  }
+  
+  .light-code table {
+    border-color: #E5E7EB; /* gray-200 */
+  }
+  
+  .light-code thead {
+    background-color: #F3F4F6; /* gray-100 */
+  }
+  
+  .light-code th {
+    color: #374151; /* gray-700 */
+  }
+  
+  .light-code tr:nth-child(even) {
+    background-color: #F9FAFB; /* gray-50 */
+  }
+}
